@@ -59,7 +59,7 @@ packages = ["cinerocket"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["fastembed.*", "plotly.*", "streamlit.*", "sqlglot.*"]
+module = ["fastembed.*", "plotly.*", "streamlit.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
