@@ -8,6 +8,7 @@ import typer
 import uvicorn
 from rich.console import Console
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TimeElapsedColumn
+from rich.table import Table
 
 from cinerocket.cli.render import render_response
 from cinerocket.config import Settings, get_settings
@@ -15,6 +16,8 @@ from cinerocket.container import Container, build_container
 from cinerocket.database.connection import ReadOnlyDatabase
 from cinerocket.database.movies import MovieRepository
 from cinerocket.domain.errors import CineRocketError
+from cinerocket.evaluation.dataset import load_cases
+from cinerocket.evaluation.runner import CaseResult, EvaluationRunner
 from cinerocket.llm.quota import fetch_openrouter_quota
 from cinerocket.observability import configure_logging
 from cinerocket.semantic.embedder import FastEmbedEmbedder
@@ -25,7 +28,9 @@ app = typer.Typer(
     no_args_is_help=True, help="CineRocket Analytics: perguntas em linguagem natural sobre filmes."
 )
 index_app = typer.Typer(no_args_is_help=True, help="Índice semântico das sinopses.")
+eval_app = typer.Typer(no_args_is_help=True, help="Avaliação do agente com perguntas de referência.")
 app.add_typer(index_app, name="index")
+app.add_typer(eval_app, name="eval")
 
 console = Console()
 EXIT_COMMANDS = {"sair", "exit", "quit", ":q"}
@@ -147,4 +152,40 @@ def build_index(
     console.print(
         f"[green]Índice criado:[/green] {manifest.size} filmes, dimensão {manifest.dimension}, "
         f"modelo {manifest.model_name}"
+    )
+
+
+@eval_app.command("run")
+def run_evaluation(
+    case_ids: Annotated[
+        list[str] | None, typer.Option("--case", help="Executa só os casos informados.")
+    ] = None,
+    limit: Annotated[int | None, typer.Option(help="Quantidade máxima de casos.")] = None,
+    delay: Annotated[float, typer.Option(help="Pausa em segundos entre perguntas.")] = 5.0,
+    output: Annotated[Path, typer.Option(help="Diretório dos relatórios.")] = Path("data/eval"),
+) -> None:
+    """Roda o conjunto de avaliação contra o agente (consome cota do LLM)."""
+    container = load_container()
+    cases = [case for case in load_cases() if not case_ids or case.id in case_ids][:limit]
+    if not cases:
+        console.print("[red]Nenhum caso selecionado.[/red]")
+        raise typer.Exit(code=1)
+
+    def show(result: CaseResult) -> None:
+        mark = "[green]✔[/green]" if result.passed else "[red]✘[/red]"
+        origin = "cache" if result.cached else f"{result.model_requests} req"
+        console.print(f"{mark} {result.case_id}: {result.error or result.detail} ({origin})")
+
+    runner = EvaluationRunner(container.service, container.executor)
+    report = asyncio.run(runner.run(cases, delay_seconds=delay, on_result=show))
+    table = Table("Categoria", "Caso", "Resultado", "Score", header_style="bold cyan")
+    for result in report.results:
+        table.add_row(
+            result.category, result.case_id, "ok" if result.passed else "falhou", f"{result.score:.2f}"
+        )
+    console.print(table)
+    path = report.save(output)
+    console.print(
+        f"Acurácia: [bold]{report.accuracy:.0%}[/bold] · {report.model_requests} requisições ao modelo · "
+        f"relatório em {path}"
     )
