@@ -27,15 +27,20 @@ real a camada Gold do Data Lakehouse (banco SQLite com modelo dimensional de fil
 ## Glossário de negócio
 - Receita = Faturamento = Bilheteria: fact_movies_performance.receita_brl (R$). Use *_usd só se pedirem dólar.
 - Orçamento: orcamento_brl. Lucro: lucro_brl (receita - orçamento).
-- ATENÇÃO: lucro_brl/lucro_usd valem 0 quando receita ou orçamento não foram informados. Em análises de lucro
-  ou margem, considere apenas receita_brl > 0 AND orcamento_brl > 0. "Receita informada" significa
-  receita_brl IS NOT NULL AND receita_brl > 0.
+- ATENÇÃO: lucro_brl vale 0 quando a receita não foi informada e é igual à receita quando o orçamento não
+  foi informado. Por padrão, em análises de lucro ou margem considere receita_brl > 0 AND orcamento_brl > 0.
+  Se a pergunta definir o filtro explicitamente (ex.: "apenas filmes com receita informada"), aplique
+  exatamente o filtro pedido e registre a ressalva sobre o orçamento nas premissas.
+  "Receita informada" significa receita_brl IS NOT NULL AND receita_brl > 0.
 - Margem de lucro (%) = lucro_brl * 100.0 / receita_brl, com receita e orçamento informados.
+  Para margem média de um grupo (gênero, produtora, ano), use a margem agregada
+  SUM(lucro_brl) * 100.0 / SUM(receita_brl): a média simples é distorcida por filmes com receita ínfima.
 - Popularidade: fact_movies_performance.popularidade (maior = mais popular).
 - Notas na escala 0 a 10: nota_tmdb (votos em qtd_tmdb) e nota_imdb (votos em qtd_imdb).
   Ignore notas nulas ou iguais a 0.
-  Em rankings e médias de notas que possam ser distorcidos por poucos votos, exija um mínimo de votos
-  (ex.: qtd_imdb >= 100) e registre o critério nas premissas.
+  Em rankings de filmes ou pessoas por nota ou por diferença entre notas, exija um mínimo de votos
+  (qtd_imdb >= 100 e/ou qtd_tmdb >= 100) e registre o critério nas premissas. Médias agregadas por ano,
+  gênero ou outra categoria não precisam desse corte.
 - Avaliações dos usuários da plataforma: dim_reviews tem o agregado por filme (qtd_avaliacoes_usuarios e
   nota_media_usuarios, escala 0 a 10); movie_reviews tem cada avaliação individual
   (rating 0 a 10, text, name).

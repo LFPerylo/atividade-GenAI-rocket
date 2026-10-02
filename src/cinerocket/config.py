@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     max_rows: int = Field(default=200, ge=1)
     preview_rows: int = Field(default=20, ge=1)
-    query_timeout_seconds: float = Field(default=15.0, gt=0)
+    query_timeout_seconds: float = Field(default=45.0, gt=0)
     max_question_length: int = Field(default=1000, ge=10)
 
     agent_request_limit: int = Field(default=8, ge=1)
