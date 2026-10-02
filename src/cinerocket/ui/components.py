@@ -3,11 +3,16 @@ from html import escape
 from typing import Any
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
+from cinerocket.application.charts import chart_for
 from cinerocket.domain.models import ChatResponse, QueryResult
 from cinerocket.ui.charts import build_figure
 from cinerocket.ui.examples import EXAMPLE_QUESTIONS
+
+USER_AVATAR = ":material/person:"
+ASSISTANT_AVATAR = ":material/movie:"
 
 
 @dataclass(frozen=True)
@@ -34,9 +39,9 @@ def render_empty_state() -> str | None:
 
 
 def render_turn(turn: Turn) -> None:
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar=USER_AVATAR):
         st.markdown(turn.question)
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
         if turn.error:
             st.error(turn.error)
         elif turn.response:
@@ -46,40 +51,39 @@ def render_turn(turn: Turn) -> None:
 def render_response(response: ChatResponse) -> None:
     st.markdown(response.answer)
     result = response.result
-    tabs = _tabs_for(response)
-    if not tabs:
-        render_meta(response)
-        return
-    containers = dict(zip(tabs, st.tabs(tabs), strict=True))
-    if "Gráfico" in containers and response.chart and result:
+    figure = response_figure(response)
+    tabs = [
+        label
+        for label, available in (
+            ("Gráfico", figure is not None),
+            ("Dados", result is not None),
+            ("SQL", bool(response.sql)),
+            ("Premissas", bool(response.assumptions)),
+        )
+        if available
+    ]
+    containers = dict(zip(tabs, st.tabs(tabs), strict=True)) if tabs else {}
+    if figure is not None:
         with containers["Gráfico"]:
-            figure = build_figure(response.chart, result)
-            if figure is not None:
-                st.plotly_chart(figure, config={"displayModeBar": False}, key=f"chart-{id(response)}")
-    if "Dados" in containers and result:
+            st.plotly_chart(figure, config={"displayModeBar": False}, key=f"chart-{id(response)}")
+    if result is not None:
         with containers["Dados"]:
             render_result_table(result)
-    if "SQL" in containers and response.sql:
+    if response.sql:
         with containers["SQL"]:
             st.code(response.sql, language="sql", wrap_lines=True)
-    if "Premissas" in containers:
+    if response.assumptions:
         with containers["Premissas"]:
             st.markdown("\n".join(f"- {item}" for item in response.assumptions))
     render_meta(response)
 
 
-def _tabs_for(response: ChatResponse) -> list[str]:
+def response_figure(response: ChatResponse) -> go.Figure | None:
     result = response.result
-    tabs = []
-    if response.chart and result and result.rows and build_figure(response.chart, result) is not None:
-        tabs.append("Gráfico")
-    if result is not None:
-        tabs.append("Dados")
-    if response.sql:
-        tabs.append("SQL")
-    if response.assumptions:
-        tabs.append("Premissas")
-    return tabs
+    if result is None or not result.rows:
+        return None
+    spec = chart_for(response.chart, result)
+    return build_figure(spec, result) if spec else None
 
 
 def render_result_table(result: QueryResult) -> None:

@@ -6,6 +6,8 @@ import streamlit as st
 from cinerocket.config import get_settings
 from cinerocket.ui.client import ApiError, CineRocketClient
 from cinerocket.ui.components import (
+    ASSISTANT_AVATAR,
+    USER_AVATAR,
     Turn,
     render_empty_state,
     render_examples,
@@ -65,9 +67,9 @@ def new_conversation() -> None:
 
 
 def ask(question: str) -> None:
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar=USER_AVATAR):
         st.markdown(question)
-    with st.chat_message("assistant"), st.spinner("Consultando a camada Gold…"):
+    with st.chat_message("assistant", avatar=ASSISTANT_AVATAR), st.spinner("Consultando a camada Gold…"):
         try:
             response = get_client().ask(question, st.session_state.session_id)
         except ApiError as error:

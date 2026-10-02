@@ -79,13 +79,22 @@ code,
   margin: 0;
 }
 
+.stHtml dl.cr-status {
+  padding: 0;
+}
+
 .cr-status dt {
   color: var(--cr-ink);
   font-weight: 500;
 }
 
+.cr-status dt,
 .cr-status dd {
   margin: 0;
+  padding: 0;
+}
+
+.cr-status dd {
   text-align: right;
 }
 

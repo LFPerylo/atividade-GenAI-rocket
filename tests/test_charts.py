@@ -1,5 +1,5 @@
-from cinerocket.application.charts import infer_chart
-from cinerocket.domain.models import QueryResult
+from cinerocket.application.charts import chart_for, infer_chart
+from cinerocket.domain.models import ChartSpec, QueryResult
 
 
 def test_infers_bar_for_category_metric_pairs() -> None:
@@ -17,3 +17,13 @@ def test_infers_line_for_yearly_series_and_skips_wide_results() -> None:
 
     assert infer_chart(yearly) is not None and infer_chart(yearly).kind == "line"
     assert infer_chart(wide) is None
+
+
+def test_swaps_axes_when_model_inverts_them() -> None:
+    result = QueryResult(sql="", columns=["genero", "lucro"], rows=[["Drama", 10.5], ["Horror", 4.0]])
+    inverted = ChartSpec(kind="horizontal_bar", x="lucro", y="genero", title="Lucro")
+
+    chart = chart_for(inverted, result)
+
+    assert chart is not None
+    assert (chart.x, chart.y) == ("genero", "lucro")

@@ -18,3 +18,18 @@ def infer_chart(result: QueryResult) -> ChartSpec | None:
     if any(hint in label.lower() for hint in TEMPORAL_HINTS) and is_numeric_column(result, 0):
         return ChartSpec(kind="line", x=label, y=value, title=f"{value} por {label}")
     return ChartSpec(kind="horizontal_bar", x=label, y=value, title=f"{value} por {label}")
+
+
+def align_chart(spec: ChartSpec | None, result: QueryResult) -> ChartSpec | None:
+    if spec is None or not {spec.x, spec.y} <= set(result.columns):
+        return None
+    x_index, y_index = result.columns.index(spec.x), result.columns.index(spec.y)
+    if is_numeric_column(result, y_index):
+        return spec
+    if is_numeric_column(result, x_index):
+        return spec.model_copy(update={"x": spec.y, "y": spec.x})
+    return None
+
+
+def chart_for(spec: ChartSpec | None, result: QueryResult) -> ChartSpec | None:
+    return align_chart(spec, result) or infer_chart(result)
