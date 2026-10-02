@@ -124,10 +124,23 @@ def serve(
 
 
 @app.command()
-def ui(port: Annotated[int, typer.Option()] = 8501) -> None:
+def ui(
+    host: Annotated[str, typer.Option()] = "127.0.0.1",
+    port: Annotated[int, typer.Option()] = 8501,
+) -> None:
     """Sobe a interface Streamlit (requer a API em execução)."""
     script = Path(__file__).resolve().parent.parent / "ui" / "app.py"
-    command = [sys.executable, "-m", "streamlit", "run", str(script), "--server.port", str(port)]
+    command = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(script),
+        "--server.address",
+        host,
+        "--server.port",
+        str(port),
+    ]
     raise typer.Exit(code=subprocess.call(command))
 
 
