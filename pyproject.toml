@@ -1,0 +1,68 @@
+[project]
+name = "cinerocket"
+version = "0.1.0"
+description = "Agente Text-to-SQL para análise do catálogo de filmes da CineData Analytics"
+readme = "README.md"
+authors = [{ name = "LFPerylo" }]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.142.2",
+    "fastembed>=0.8.1",
+    "httpx>=0.28.1",
+    "numpy>=2.5.3",
+    "pandas>=3.0.6",
+    "plotly>=7.1.0",
+    "pydantic-ai-slim[google,openrouter]>=2.53.0",
+    "pydantic-settings>=2.15.0",
+    "pyyaml>=6.0.3",
+    "rich>=15.0.0",
+    "sqlglot>=30.21.0",
+    "streamlit>=1.65.0",
+    "typer>=0.27.2",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+cinerocket = "cinerocket.cli.main:app"
+
+[build-system]
+requires = ["uv_build>=0.8.17,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.0",
+    "pandas-stubs>=3.0.5.260914",
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.10",
+    "types-pyyaml>=6.0.12.20260906",
+]
+
+[tool.uv.build-backend]
+module-name = "cinerocket"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "ASYNC", "PTH", "C4"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+packages = ["cinerocket"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["fastembed.*", "plotly.*", "streamlit.*", "sqlglot.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-q"
