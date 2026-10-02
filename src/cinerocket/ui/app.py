@@ -103,11 +103,14 @@ def main() -> None:
     render_intro()
     for turn in st.session_state.turns:
         render_turn(turn)
-    if not st.session_state.turns:
-        chosen = render_empty_state() or chosen
     typed = st.chat_input("Pergunte sobre filmes, bilheteria, notas, elenco…", max_chars=1000)
+    starters = st.empty()
+    if not st.session_state.turns and not typed:
+        with starters.container():
+            chosen = render_empty_state() or chosen
     question = typed or chosen
     if question:
+        starters.empty()
         ask(question)
 
 

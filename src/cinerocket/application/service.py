@@ -18,6 +18,7 @@ from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, Text
 from cinerocket.agent.builder import AnalystAgent
 from cinerocket.agent.deps import AgentDeps
 from cinerocket.agent.history import keep_recent_turns
+from cinerocket.application.charts import infer_chart
 from cinerocket.application.keys import cache_key
 from cinerocket.application.ports import ResponseCache, SessionStore
 from cinerocket.domain.errors import AgentFailureError, LLMUnavailableError, SessionNotFoundError
@@ -78,7 +79,7 @@ class AnalyticsService:
             answer=answer.answer,
             sql=result.sql if result else None,
             result=result,
-            chart=answer.chart if result else None,
+            chart=(answer.chart or infer_chart(result)) if result else None,
             assumptions=answer.assumptions,
             out_of_scope=answer.out_of_scope,
             model=model_name,

@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     query_timeout_seconds: float = Field(default=45.0, gt=0)
     max_question_length: int = Field(default=1000, ge=10)
 
+    llm_timeout_seconds: float = Field(default=60.0, gt=0)
     agent_request_limit: int = Field(default=8, ge=1)
     agent_retries: int = Field(default=3, ge=0)
     history_max_turns: int = Field(default=6, ge=1)

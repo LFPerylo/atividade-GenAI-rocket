@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from importlib.metadata import version
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from cinerocket.api.errors import register_error_handlers
 from cinerocket.api.routes import chat, health, metadata, sessions
@@ -31,6 +32,7 @@ def create_app(container: Container | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     register_error_handlers(app)
+    app.add_api_route("/", lambda: RedirectResponse("/docs"), include_in_schema=False)
     app.include_router(health.router)
     for router in (chat.router, sessions.router, metadata.router):
         app.include_router(router, prefix=API_PREFIX)

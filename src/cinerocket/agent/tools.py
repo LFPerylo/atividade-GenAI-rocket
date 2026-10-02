@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from pydantic_ai import ModelRetry, RunContext
@@ -6,6 +7,8 @@ from pydantic_ai.tools import ToolDefinition
 from cinerocket.agent.deps import AgentDeps
 from cinerocket.domain.errors import QueryExecutionError, SemanticIndexUnavailableError, UnsafeQueryError
 from cinerocket.domain.models import CellValue
+
+logger = logging.getLogger(__name__)
 
 
 def describe_table(ctx: RunContext[AgentDeps], table_name: str) -> dict[str, Any]:
@@ -49,7 +52,9 @@ def run_sql(ctx: RunContext[AgentDeps], sql: str) -> dict[str, Any]:
     try:
         result = ctx.deps.execute(sql)
     except (UnsafeQueryError, QueryExecutionError) as error:
+        logger.info("run_sql rejeitado: %s", error)
         raise ModelRetry(f"{error} Corrija a consulta e tente novamente.") from error
+    logger.info("run_sql: %d linhas em %.0f ms", result.row_count, result.elapsed_ms)
     return result.preview(ctx.deps.preview_rows)
 
 
@@ -63,6 +68,7 @@ def search_synopses(ctx: RunContext[AgentDeps], query: str) -> list[dict[str, An
     """
     if ctx.deps.semantic is None:
         raise ModelRetry("A busca semântica não está disponível. Responda usando apenas SQL.")
+    logger.info("search_synopses: %s", query)
     try:
         matches = ctx.deps.semantic.search(query, ctx.deps.semantic_limit)
     except SemanticIndexUnavailableError as error:

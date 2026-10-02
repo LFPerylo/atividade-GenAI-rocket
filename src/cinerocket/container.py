@@ -46,7 +46,10 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
     semantic = SemanticSearch(embedder, index, movies)
     chain = model_chain or build_model_chain(settings)
     agent = build_agent(
-        chain.model, retries=settings.agent_retries, history_max_turns=settings.history_max_turns
+        chain.model,
+        retries=settings.agent_retries,
+        history_max_turns=settings.history_max_turns,
+        timeout_seconds=settings.llm_timeout_seconds,
     )
     service = AnalyticsService(
         agent=agent,

@@ -20,7 +20,13 @@ from cinerocket.domain.models import AgentAnswer
 AnalystAgent = Agent[AgentDeps, AgentAnswer]
 
 
-def build_agent(model: Model | None, *, retries: int, history_max_turns: int) -> AnalystAgent:
+def normalize_markdown(text: str) -> str:
+    return text.replace("\\r\\n", "\n").replace("\\n", "\n").strip()
+
+
+def build_agent(
+    model: Model | None, *, retries: int, history_max_turns: int, timeout_seconds: float
+) -> AnalystAgent:
     agent: AnalystAgent = Agent(
         model,
         name="cinerocket-analyst",
@@ -28,6 +34,7 @@ def build_agent(model: Model | None, *, retries: int, history_max_turns: int) ->
         output_type=AgentAnswer,
         instructions=SYSTEM_INSTRUCTIONS,
         retries=retries,
+        model_settings={"timeout": timeout_seconds},
         defer_model_check=True,
         tools=[
             Tool(describe_table),
@@ -46,6 +53,7 @@ def build_agent(model: Model | None, *, retries: int, history_max_turns: int) ->
 
     @agent.output_validator
     def validate_answer(ctx: RunContext[AgentDeps], answer: AgentAnswer) -> AgentAnswer:
+        answer = answer.model_copy(update={"answer": normalize_markdown(answer.answer)})
         if answer.out_of_scope or not answer.sql:
             return answer.model_copy(update={"sql": None, "chart": None})
         if not ctx.deps.was_executed(answer.sql):
