@@ -1,6 +1,6 @@
 from functools import partial
 
-from pydantic_ai import Agent, ModelRetry, RunContext, Tool
+from pydantic_ai import Agent, RunContext, Tool
 from pydantic_ai.capabilities import ProcessHistory
 from pydantic_ai.models import Model
 
@@ -14,14 +14,10 @@ from cinerocket.agent.tools import (
     run_sql,
     search_synopses,
 )
-from cinerocket.domain.errors import QueryExecutionError, UnsafeQueryError
+from cinerocket.agent.validation import validate_answer
 from cinerocket.domain.models import AgentAnswer
 
 AnalystAgent = Agent[AgentDeps, AgentAnswer]
-
-
-def normalize_markdown(text: str) -> str:
-    return text.replace("\\r\\n", "\n").replace("\\n", "\n").strip()
 
 
 def build_agent(
@@ -52,21 +48,7 @@ def build_agent(
         )
 
     @agent.output_validator
-    def validate_answer(ctx: RunContext[AgentDeps], answer: AgentAnswer) -> AgentAnswer:
-        answer = answer.model_copy(update={"answer": normalize_markdown(answer.answer)})
-        if answer.out_of_scope or not answer.sql:
-            return answer.model_copy(update={"sql": None, "chart": None})
-        if not ctx.deps.was_executed(answer.sql):
-            raise ModelRetry(
-                "O SQL final não foi executado com run_sql nesta análise. Execute-o com run_sql e escreva a "
-                "resposta somente a partir do resultado retornado."
-            )
-        try:
-            result = ctx.deps.execute(answer.sql)
-        except (UnsafeQueryError, QueryExecutionError) as error:
-            raise ModelRetry(f"O SQL final falhou: {error} Corrija e teste com run_sql.") from error
-        if answer.chart and not {answer.chart.x, answer.chart.y} <= set(result.columns):
-            return answer.model_copy(update={"chart": None})
-        return answer
+    def check_answer(ctx: RunContext[AgentDeps], answer: AgentAnswer) -> AgentAnswer:
+        return validate_answer(ctx.deps, answer)
 
     return agent
