@@ -200,6 +200,8 @@ uv run cinerocket eval run --limit 5 --delay 5
 
 Cada pergunta usa de 2 a 5 requisições ao modelo; planeje a execução pela cota diária.
 
+Resultado medido em 02/10/2026 com `nvidia/nemotron-3.5-lightning:free`: 7 das 8 perguntas avaliadas acertaram, considerando os casos que falharam numa primeira rodada e passaram depois do endurecimento da validação de saída. A falha restante, "gênero com maior margem média", foi de interpretação: o agente omitiu o filtro `orcamento_brl > 0` que o glossário define como padrão. Modelos gratuitos variam bastante entre execuções; com o Gemini à frente da cadeia, a aderência às regras do glossário tende a ser maior.
+
 ## Configuração
 
 | Variável | Padrão | Descrição |
