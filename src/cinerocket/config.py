@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     app_db_path: Path = Path("data/app.db")
     index_dir: Path = Path("data/index")
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    embedding_cache_dir: Path = Path("data/models")
     embedding_batch_size: int = 256
+    semantic_search_limit: int = Field(default=10, ge=1, le=50)
     excluded_tables: Annotated[frozenset[str], NoDecode] = frozenset({"alembic_version"})
 
     max_rows: int = Field(default=200, ge=1)
