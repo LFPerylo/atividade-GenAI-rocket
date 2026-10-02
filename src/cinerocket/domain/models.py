@@ -30,8 +30,11 @@ class QueryResult(BaseModel):
 
 
 class ChartSpec(BaseModel):
-    kind: Literal["bar", "horizontal_bar", "line", "scatter", "pie"] = Field(
-        description="Tipo de gráfico mais adequado aos dados"
+    kind: Literal["bar", "horizontal_bar", "line", "scatter"] = Field(
+        description=(
+            "bar ou horizontal_bar para rankings e categorias, line para séries temporais, "
+            "scatter para correlação entre duas métricas"
+        )
     )
     x: str = Field(description="Nome exato da coluna do resultado usada no eixo X ou como rótulo")
     y: str = Field(description="Nome exato da coluna numérica do resultado usada no eixo Y (ou valores)")

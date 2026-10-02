@@ -1,0 +1,134 @@
+:root {
+  --cr-ink: #16191d;
+  --cr-ink-muted: #5e646c;
+  --cr-rule: #e2e4e0;
+  --cr-panel: #f3f4f2;
+  --cr-accent: #0b6e63;
+  --cr-accent-wash: #e3f1ee;
+  --cr-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+::selection {
+  background: var(--cr-accent-wash);
+  color: var(--cr-ink);
+}
+
+html,
+body,
+[data-testid="stAppViewContainer"] {
+  caret-color: var(--cr-accent);
+}
+
+.block-container {
+  max-width: 1040px;
+  padding-top: 2.5rem;
+  padding-bottom: 6rem;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+[data-testid="stDataFrame"],
+[data-testid="stTable"],
+code,
+.cr-meta,
+.cr-status dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.cr-lede {
+  color: var(--cr-ink-muted);
+  font-size: 1.0625rem;
+  max-width: 62ch;
+  margin: 0.25rem 0 2rem;
+}
+
+.cr-meta {
+  color: var(--cr-ink-muted);
+  font-size: 0.8125rem;
+  margin-top: 0.5rem;
+}
+
+.cr-meta strong {
+  color: var(--cr-ink);
+  font-weight: 600;
+}
+
+.cr-section-label {
+  color: var(--cr-ink-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.cr-status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.6rem;
+  font-size: 0.8125rem;
+  color: var(--cr-ink-muted);
+  margin: 0;
+}
+
+.cr-status dt {
+  color: var(--cr-ink);
+  font-weight: 500;
+}
+
+.cr-status dd {
+  margin: 0;
+  text-align: right;
+}
+
+.stButton > button {
+  transition:
+    transform 160ms var(--cr-ease-out),
+    background-color 160ms var(--cr-ease-out),
+    border-color 160ms var(--cr-ease-out),
+    color 160ms var(--cr-ease-out);
+}
+
+.stButton > button:active {
+  transform: scale(0.97);
+}
+
+[data-testid="stSidebar"] .stButton > button {
+  justify-content: flex-start;
+  text-align: left;
+  font-weight: 400;
+  line-height: 1.35;
+  padding: 0.45rem 0.7rem;
+  white-space: normal;
+  height: auto;
+}
+
+[data-testid="stSidebar"] .stButton > button:hover {
+  border-color: var(--cr-accent);
+  color: var(--cr-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--cr-accent) !important;
+  outline-offset: 2px;
+}
+
+[data-testid="stChatMessage"] {
+  padding: 0.75rem 0;
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
