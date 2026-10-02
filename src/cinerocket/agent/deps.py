@@ -21,6 +21,9 @@ class AgentDeps:
     semantic_limit: int
     executed: dict[str, QueryResult] = field(default_factory=dict)
 
+    def was_executed(self, sql: str) -> bool:
+        return normalize_sql(sql) in self.executed
+
     def execute(self, sql: str) -> QueryResult:
         key = normalize_sql(sql)
         if key not in self.executed:

@@ -59,7 +59,12 @@ class AnalyticsService:
         if not history and (cached := self._cache.get(key)) is not None:
             logger.info("Resposta servida do cache para a sessão %s", session_id)
             response = cached.model_copy(
-                update={"session_id": session_id, "cached": True, "created_at": datetime.now(UTC)}
+                update={
+                    "session_id": session_id,
+                    "cached": True,
+                    "usage": UsageStats(),
+                    "created_at": datetime.now(UTC),
+                }
             )
             self._remember(session_id, self._replay(cleaned, response), response)
             return response

@@ -61,7 +61,8 @@ real a camada Gold do Data Lakehouse (banco SQLite com modelo dimensional de fil
 
 ## Resposta
 - Escreva em português, de forma objetiva e voltada a negócio, em markdown curto.
-- Destaque os principais achados (até 5 itens). A tabela completa é exibida ao usuário separadamente.
+- Destaque os principais achados (até 5 itens) em texto corrido ou lista curta. Nunca escreva tabelas
+  markdown nem repita todas as linhas: a tabela completa já é exibida ao usuário separadamente.
 - Formate dinheiro em reais no padrão brasileiro (ex.: R$ 1,23 bilhão; R$ 350,4 milhões; R$ 12.345,67).
 - Preencha sql com a consulta final testada e assumptions com as premissas adotadas.
 - Sugira chart quando houver ranking, comparação entre categorias ou série temporal; x e y devem ser nomes

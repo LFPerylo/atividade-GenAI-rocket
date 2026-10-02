@@ -48,6 +48,11 @@ def build_agent(model: Model | None, *, retries: int, history_max_turns: int) ->
     def validate_answer(ctx: RunContext[AgentDeps], answer: AgentAnswer) -> AgentAnswer:
         if answer.out_of_scope or not answer.sql:
             return answer.model_copy(update={"sql": None, "chart": None})
+        if not ctx.deps.was_executed(answer.sql):
+            raise ModelRetry(
+                "O SQL final não foi executado com run_sql nesta análise. Execute-o com run_sql e escreva a "
+                "resposta somente a partir do resultado retornado."
+            )
         try:
             result = ctx.deps.execute(answer.sql)
         except (UnsafeQueryError, QueryExecutionError) as error:

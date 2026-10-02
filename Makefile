@@ -2,6 +2,7 @@
 
 install:
 	uv sync
+	@if [ "$$(uname)" = Darwin ]; then chflags -R nohidden .venv; fi
 
 hooks:
 	uv run pre-commit install
