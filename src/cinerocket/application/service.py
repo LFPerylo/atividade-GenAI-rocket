@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 class ServicePolicy:
     request_limit: int
     history_max_turns: int
-    cache_scope: tuple[str, ...]
 
 
 class AnalyticsService:
@@ -44,6 +43,7 @@ class AnalyticsService:
         cache: ResponseCache,
         question_guard: QuestionGuard,
         policy: ServicePolicy,
+        cache_scope: Callable[[], tuple[str, ...]],
     ) -> None:
         self._agent = agent
         self._deps_factory = deps_factory
@@ -51,17 +51,19 @@ class AnalyticsService:
         self._cache = cache
         self._question_guard = question_guard
         self._policy = policy
+        self._cache_scope = cache_scope
 
     async def ask(self, question: str, session_id: str | None = None) -> ChatResponse:
         cleaned = self._question_guard.clean(question)
         session_id = session_id or uuid.uuid4().hex
         history = self._sessions.load_messages(session_id)
-        key = cache_key(cleaned, *self._policy.cache_scope)
+        key = cache_key(cleaned, *self._cache_scope())
         if not history and (cached := self._cache.get(key)) is not None:
             logger.info("Resposta servida do cache para a sessão %s", session_id)
             response = cached.model_copy(
                 update={
                     "session_id": session_id,
+                    "question": cleaned,
                     "cached": True,
                     "usage": UsageStats(),
                     "created_at": datetime.now(UTC),

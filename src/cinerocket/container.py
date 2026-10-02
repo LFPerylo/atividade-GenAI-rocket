@@ -4,6 +4,7 @@ from functools import partial
 
 from cinerocket.agent.builder import build_agent
 from cinerocket.agent.deps import AgentDeps
+from cinerocket.agent.prompts import PROMPT_VERSION
 from cinerocket.application.service import AnalyticsService, ServicePolicy
 from cinerocket.config import Settings
 from cinerocket.database.catalog import SchemaCatalog
@@ -37,7 +38,7 @@ class Container:
 def build_container(settings: Settings, model_chain: ModelChain | None = None) -> Container:
     database = ReadOnlyDatabase(settings.database_path, settings.query_timeout_seconds)
     catalog = SchemaCatalog(database, settings.excluded_tables)
-    executor = QueryExecutor(database, SqlGuard(catalog.table_names), settings.max_rows)
+    executor = QueryExecutor(database, SqlGuard(lambda: catalog.table_names), settings.max_rows)
     movies = MovieRepository(database)
     embedder = FastEmbedEmbedder(
         settings.embedding_model, settings.embedding_cache_dir, settings.embedding_batch_size
@@ -67,8 +68,8 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
         policy=ServicePolicy(
             request_limit=settings.agent_request_limit,
             history_max_turns=settings.history_max_turns,
-            cache_scope=(catalog.fingerprint, chain.fingerprint),
         ),
+        cache_scope=lambda: (catalog.fingerprint, chain.fingerprint, PROMPT_VERSION),
     )
     return Container(
         settings=settings,

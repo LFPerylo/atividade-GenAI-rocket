@@ -6,6 +6,8 @@ from cinerocket.domain.models import AgentAnswer
 
 
 def normalize_markdown(text: str) -> str:
+    if "\n" in text:
+        return text.strip()
     return text.replace("\\r\\n", "\n").replace("\\n", "\n").strip()
 
 

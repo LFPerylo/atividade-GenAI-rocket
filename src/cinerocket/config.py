@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     api_url: str = "http://localhost:8000"
     log_level: str = "INFO"
 
+    @field_validator("openrouter_api_key", "google_api_key", mode="before")
+    @classmethod
+    def _blank_as_missing(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
+
     @field_validator("excluded_tables", mode="before")
     @classmethod
     def _split_tables(cls, value: object) -> object:

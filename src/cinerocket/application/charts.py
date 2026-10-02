@@ -1,7 +1,7 @@
 from cinerocket.domain.models import ChartSpec, QueryResult
 
 MAX_CHART_ROWS = 25
-TEMPORAL_HINTS = ("ano", "year", "mes", "data", "date")
+TEMPORAL_TOKENS = frozenset({"ano", "year", "mes", "month", "data", "date", "dia", "day"})
 
 
 def is_numeric_column(result: QueryResult, index: int) -> bool:
@@ -15,7 +15,7 @@ def infer_chart(result: QueryResult) -> ChartSpec | None:
     label, value = result.columns
     if not is_numeric_column(result, 1):
         return None
-    if any(hint in label.lower() for hint in TEMPORAL_HINTS) and is_numeric_column(result, 0):
+    if TEMPORAL_TOKENS & set(label.lower().split("_")) and is_numeric_column(result, 0):
         return ChartSpec(kind="line", x=label, y=value, title=f"{value} por {label}")
     return ChartSpec(kind="horizontal_bar", x=label, y=value, title=f"{value} por {label}")
 

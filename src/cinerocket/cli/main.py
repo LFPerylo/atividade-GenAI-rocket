@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from typing import Annotated
 
+import httpx
 import typer
 import uvicorn
 from rich.console import Console
@@ -105,7 +106,11 @@ def quota() -> None:
     if settings.openrouter_api_key is None:
         console.print("[red]OPENROUTER_API_KEY não configurada.[/red]")
         raise typer.Exit(code=1)
-    data = asyncio.run(fetch_openrouter_quota(settings.openrouter_api_key.get_secret_value()))
+    try:
+        data = asyncio.run(fetch_openrouter_quota(settings.openrouter_api_key.get_secret_value()))
+    except httpx.HTTPError as error:
+        console.print(f"[red]Falha ao consultar o OpenRouter: {error}[/red]")
+        raise typer.Exit(code=1) from error
     daily = data.free_model_daily_requests
     if daily is None:
         console.print_json(data.model_dump_json())

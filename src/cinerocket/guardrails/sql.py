@@ -1,4 +1,4 @@
-from collections.abc import Collection
+from collections.abc import Callable, Iterable
 
 import sqlglot
 from sqlglot import exp
@@ -28,8 +28,8 @@ FORBIDDEN_FUNCTIONS = frozenset({"load_extension", "readfile", "writefile", "edi
 
 
 class SqlGuard:
-    def __init__(self, allowed_tables: Collection[str], dialect: str = "sqlite") -> None:
-        self._allowed = {name.lower() for name in allowed_tables}
+    def __init__(self, allowed_tables: Callable[[], Iterable[str]], dialect: str = "sqlite") -> None:
+        self._allowed_tables = allowed_tables
         self._dialect = dialect
 
     def validate(self, sql: str) -> str:
@@ -66,9 +66,9 @@ class SqlGuard:
         referenced = {table.name.lower() for table in tree.find_all(exp.Table)}
         if "" in referenced:
             raise UnsafeQueryError("Funções de tabela não são permitidas; use apenas as tabelas do catálogo.")
-        unknown = sorted(referenced - cte_names - self._allowed)
+        allowed = {name.lower() for name in self._allowed_tables()}
+        unknown = sorted(referenced - cte_names - allowed)
         if unknown:
             raise UnsafeQueryError(
-                f"Tabela(s) não permitida(s): {', '.join(unknown)}. "
-                f"Use apenas: {', '.join(sorted(self._allowed))}."
+                f"Tabela(s) não permitida(s): {', '.join(unknown)}. Use apenas: {', '.join(sorted(allowed))}."
             )

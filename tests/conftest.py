@@ -65,7 +65,7 @@ def catalog(database: ReadOnlyDatabase) -> SchemaCatalog:
 
 @pytest.fixture
 def guard(catalog: SchemaCatalog) -> SqlGuard:
-    return SqlGuard(catalog.table_names)
+    return SqlGuard(lambda: catalog.table_names)
 
 
 @pytest.fixture
