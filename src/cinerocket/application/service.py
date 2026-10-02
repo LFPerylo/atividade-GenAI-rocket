@@ -91,6 +91,9 @@ class AnalyticsService:
             self._cache.set(key, response)
         return response
 
+    def clear_cache(self) -> int:
+        return self._cache.clear()
+
     def transcript(self, session_id: str) -> list[ChatResponse]:
         turns = self._sessions.transcript(session_id)
         if not turns:

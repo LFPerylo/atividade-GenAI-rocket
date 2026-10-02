@@ -154,6 +154,7 @@ A API sobe em <http://localhost:8000> e a UI em <http://localhost:8501>. A pasta
 | `cinerocket index build [--parallel N]` | Gera o índice semântico das sinopses |
 | `cinerocket eval run [--case ID ...] [--limit N] [--delay S]` | Roda a avaliação; o relatório vai para `data/eval/` |
 | `cinerocket quota` | Mostra as requisições gratuitas restantes no OpenRouter |
+| `cinerocket cache clear` | Limpa o cache de respostas (útil após ajustar o prompt) |
 | `make check` | Lint, formatação, tipos e testes |
 
 ## API

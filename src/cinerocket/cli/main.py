@@ -30,7 +30,9 @@ app = typer.Typer(
 index_app = typer.Typer(no_args_is_help=True, help="Índice semântico das sinopses.")
 eval_app = typer.Typer(no_args_is_help=True, help="Avaliação do agente com perguntas de referência.")
 app.add_typer(index_app, name="index")
+cache_app = typer.Typer(no_args_is_help=True, help="Cache de respostas.")
 app.add_typer(eval_app, name="eval")
+app.add_typer(cache_app, name="cache")
 
 console = Console()
 EXIT_COMMANDS = {"sair", "exit", "quit", ":q"}
@@ -202,3 +204,10 @@ def run_evaluation(
         f"Acurácia: [bold]{report.accuracy:.0%}[/bold] · {report.model_requests} requisições ao modelo · "
         f"relatório em {path}"
     )
+
+
+@cache_app.command("clear")
+def clear_cache() -> None:
+    """Remove todas as respostas em cache."""
+    removed = load_container().service.clear_cache()
+    console.print(f"{removed} respostas removidas do cache.")

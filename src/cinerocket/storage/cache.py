@@ -37,3 +37,7 @@ class SQLiteResponseCache(SqliteStore):
                 "INSERT OR REPLACE INTO response_cache (cache_key, response, created_at) VALUES (?, ?, ?)",
                 (key, response.model_dump_json(), datetime.now(UTC).isoformat()),
             )
+
+    def clear(self) -> int:
+        with self._connect() as connection:
+            return connection.execute("DELETE FROM response_cache").rowcount
