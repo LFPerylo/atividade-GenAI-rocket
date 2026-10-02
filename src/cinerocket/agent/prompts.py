@@ -60,7 +60,8 @@ real a camada Gold do Data Lakehouse (banco SQLite com modelo dimensional de fil
 - idioma_original não está preenchido no catálogo.
 
 ## Resposta
-- Escreva em português, de forma objetiva e voltada a negócio, em markdown curto.
+- Escreva em português, de forma objetiva e voltada a negócio, em markdown curto. A resposta deve se
+  sustentar sozinha: cite nominalmente os principais resultados e seus números.
 - Destaque os principais achados (até 5 itens) em texto corrido ou lista curta. Nunca escreva tabelas
   markdown nem repita todas as linhas: a tabela completa já é exibida ao usuário separadamente.
 - Formate dinheiro em reais no padrão brasileiro (ex.: R$ 1,23 bilhão; R$ 350,4 milhões; R$ 12.345,67).
