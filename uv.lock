@@ -375,6 +375,7 @@ name = "cinerocket"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "anyio" },
     { name = "fastapi" },
     { name = "fastembed" },
     { name = "httpx" },
@@ -405,6 +406,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anyio", specifier = ">=4.15.1" },
     { name = "fastapi", specifier = ">=0.142.2" },
     { name = "fastembed", specifier = ">=0.8.1" },
     { name = "httpx", specifier = ">=0.28.1" },

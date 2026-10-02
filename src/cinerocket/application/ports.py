@@ -1,0 +1,21 @@
+from typing import Protocol
+
+from pydantic_ai.messages import ModelMessage
+
+from cinerocket.domain.models import ChatResponse
+
+
+class SessionStore(Protocol):
+    def load_messages(self, session_id: str) -> list[ModelMessage]: ...
+
+    def save_turn(self, session_id: str, messages: list[ModelMessage], response: ChatResponse) -> None: ...
+
+    def transcript(self, session_id: str) -> list[ChatResponse]: ...
+
+    def delete(self, session_id: str) -> bool: ...
+
+
+class ResponseCache(Protocol):
+    def get(self, key: str) -> ChatResponse | None: ...
+
+    def set(self, key: str, response: ChatResponse) -> None: ...
