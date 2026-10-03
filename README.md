@@ -203,7 +203,7 @@ uv run cinerocket eval run --limit 5 --delay 5
 
 Cada pergunta usa de 2 a 5 requisições ao modelo; planeje a execução pela cota diária.
 
-Resultado medido em 02/10/2026 com `nvidia/nemotron-3.5-lightning:free`: 7 das 8 perguntas avaliadas acertaram, considerando os casos que falharam numa primeira rodada e passaram depois do endurecimento da validação de saída. A falha restante, "gênero com maior margem média", foi de interpretação: o agente omitiu o filtro `orcamento_brl > 0` que o glossário define como padrão. Com `qwen/qwen3.8-27b:free` como modelo principal, as perguntas passaram a levar de 15 a 40 s; o mesmo caso de diretores bateu 10 de 10 com a referência. Modelos gratuitos variam bastante entre execuções.
+Resultados medidos: na primeira versão, sem few-shot, 7 das 8 perguntas avaliadas acertaram, e a falha foi de interpretação ("gênero com maior margem média" sem o filtro `orcamento_brl > 0`). Com o few-shot dinâmico, os 5 casos mais sensíveis a critério (maiores margens, divergência TMDB × IMDb, dupla ator-diretor, produtora com maior lucro e gênero com maior margem) acertaram todos, com 2 a 6 requisições cada. Modelos gratuitos variam entre execuções, então trate esses números como indicativos.
 
 ## Configuração
 
