@@ -50,7 +50,6 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
         chain.model,
         retries=settings.agent_retries,
         history_max_turns=settings.history_max_turns,
-        timeout_seconds=settings.llm_timeout_seconds,
     )
     service = AnalyticsService(
         agent=agent,

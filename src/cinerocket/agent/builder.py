@@ -20,9 +20,7 @@ from cinerocket.domain.models import AgentAnswer
 AnalystAgent = Agent[AgentDeps, AgentAnswer]
 
 
-def build_agent(
-    model: Model | None, *, retries: int, history_max_turns: int, timeout_seconds: float
-) -> AnalystAgent:
+def build_agent(model: Model | None, *, retries: int, history_max_turns: int) -> AnalystAgent:
     agent: AnalystAgent = Agent(
         model,
         name="cinerocket-analyst",
@@ -30,7 +28,6 @@ def build_agent(
         output_type=AgentAnswer,
         instructions=SYSTEM_INSTRUCTIONS,
         retries=retries,
-        model_settings={"timeout": timeout_seconds},
         defer_model_check=True,
         tools=[
             Tool(describe_table),

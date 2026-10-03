@@ -12,9 +12,10 @@ class Settings(BaseSettings):
     openrouter_api_key: SecretStr | None = None
     openrouter_models: list[str] = Field(
         default_factory=lambda: [
+            "qwen/qwen3.8-27b:free",
+            "nvidia/nemotron-3-super-120b-a12b:free",
             "nvidia/nemotron-3.5-lightning:free",
             "google/gemma-4-26b-a4b-it:free",
-            "z-ai/glm-5.2:free",
             "openrouter/free",
         ]
     )
@@ -35,7 +36,7 @@ class Settings(BaseSettings):
     query_timeout_seconds: float = Field(default=45.0, gt=0)
     max_question_length: int = Field(default=1000, ge=10)
 
-    llm_timeout_seconds: float = Field(default=60.0, gt=0)
+    llm_timeout_seconds: float = Field(default=45.0, gt=0)
     agent_request_limit: int = Field(default=8, ge=1)
     agent_retries: int = Field(default=3, ge=0)
     history_max_turns: int = Field(default=6, ge=1)

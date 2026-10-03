@@ -186,7 +186,8 @@ Todas as categorias do enunciado estão na barra lateral da UI e no conjunto de 
 - **Schema completo no prompt em vez de schema linking**: as 10 tabelas cabem com folga no contexto. Isso evita uma chamada extra por pergunta, o que importa com 50 requisições por dia, e as ferramentas `describe_table`/`distinct_values` cobrem a verificação de valores.
 - **Glossário de negócio no prompt**: regras que o schema não revela. Exemplos: receita = faturamento = bilheteria; `lucro_brl` vale 0 sem receita e é igual à receita sem orçamento; margem agregada por grupo, para não ser distorcida por receitas ínfimas; filmes futuros no catálogo; nomes de gênero em inglês.
 - **Dados vêm do banco, não do modelo**: o `output_validator` rejeita SQL final não testado e o serviço reexecuta a consulta para montar a tabela e o gráfico.
-- **Fallback no cliente**, com `max_retries=0` e timeout por requisição: um 429 de um modelo gratuito troca de modelo em vez de repetir a chamada e consumir a cota diária.
+- **Fallback no cliente**, com `max_retries=0` e prazo total por chamada (`DeadlineModel`): um 429, um modelo removido do catálogo ou um modelo que demora a terminar a geração passam para o próximo da cadeia em vez de repetir a chamada ou travar a pergunta. O OpenRouter responde o status 200 na hora e entrega o corpo devagar, então só um timeout de leitura não basta.
+- **Ordem da cadeia por desempenho medido**: `qwen/qwen3.8-27b:free` e `nvidia/nemotron-3-super-120b-a12b:free` responderam com tool calling em 1 a 2 s. O `nvidia/nemotron-3.5-lightning:free` chegou a levar 2 minutos por geração com o prompt completo e ficou como reserva.
 - **Cache só no primeiro turno**: perguntas de acompanhamento dependem do histórico e sempre vão ao agente.
 - **Embeddings locais**: a busca semântica não consome cota de LLM nem exige outra API.
 
@@ -200,14 +201,14 @@ uv run cinerocket eval run --limit 5 --delay 5
 
 Cada pergunta usa de 2 a 5 requisições ao modelo; planeje a execução pela cota diária.
 
-Resultado medido em 02/10/2026 com `nvidia/nemotron-3.5-lightning:free`: 7 das 8 perguntas avaliadas acertaram, considerando os casos que falharam numa primeira rodada e passaram depois do endurecimento da validação de saída. A falha restante, "gênero com maior margem média", foi de interpretação: o agente omitiu o filtro `orcamento_brl > 0` que o glossário define como padrão. Modelos gratuitos variam bastante entre execuções; com o Gemini à frente da cadeia, a aderência às regras do glossário tende a ser maior.
+Resultado medido em 02/10/2026 com `nvidia/nemotron-3.5-lightning:free`: 7 das 8 perguntas avaliadas acertaram, considerando os casos que falharam numa primeira rodada e passaram depois do endurecimento da validação de saída. A falha restante, "gênero com maior margem média", foi de interpretação: o agente omitiu o filtro `orcamento_brl > 0` que o glossário define como padrão. Com `qwen/qwen3.8-27b:free` como modelo principal, as perguntas passaram a levar de 15 a 40 s; o mesmo caso de diretores bateu 10 de 10 com a referência. Modelos gratuitos variam bastante entre execuções.
 
 ## Configuração
 
 | Variável | Padrão | Descrição |
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | — | Chave do OpenRouter |
-| `OPENROUTER_MODELS` | 4 modelos `:free` | Lista JSON, em ordem de preferência |
+| `OPENROUTER_MODELS` | 5 modelos `:free` | Lista JSON, em ordem de preferência; o catálogo `:free` muda com frequência, confira em <https://openrouter.ai/models?q=:free> |
 | `GOOGLE_API_KEY` | — | Chave do Gemini (último fallback) |
 | `GEMINI_MODEL` | `gemini-flash-latest` | Modelo Gemini |
 | `DATABASE_PATH` | `data/cinerocket.db` | Banco da camada Gold |
@@ -216,7 +217,7 @@ Resultado medido em 02/10/2026 com `nvidia/nemotron-3.5-lightning:free`: 7 das 8
 | `EMBEDDING_MODEL` | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Modelo de embeddings |
 | `MAX_ROWS` | `200` | Máximo de linhas retornadas por consulta |
 | `QUERY_TIMEOUT_SECONDS` | `45` | Timeout de cada consulta SQL |
-| `LLM_TIMEOUT_SECONDS` | `60` | Timeout de cada requisição ao modelo |
+| `LLM_TIMEOUT_SECONDS` | `45` | Prazo total de cada chamada ao modelo antes de passar ao próximo |
 | `AGENT_REQUEST_LIMIT` | `8` | Máximo de chamadas ao modelo por pergunta |
 | `AGENT_RETRIES` | `3` | Tentativas de autocorreção por ferramenta ou saída |
 | `HISTORY_MAX_TURNS` | `6` | Turnos de conversa enviados ao modelo |

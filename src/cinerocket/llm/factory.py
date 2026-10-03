@@ -11,6 +11,7 @@ from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 from cinerocket.config import Settings
 from cinerocket.domain.errors import ConfigurationError
+from cinerocket.llm.deadline import DeadlineModel
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 APP_TITLE = "CineRocket Analytics"
@@ -43,6 +44,7 @@ def build_model_chain(settings: Settings) -> ModelChain:
     if not models:
         raise ConfigurationError("Configure OPENROUTER_API_KEY e/ou GOOGLE_API_KEY no arquivo .env.")
     names = tuple(model.model_name for model in models)
-    if len(models) == 1:
-        return ModelChain(model=models[0], names=names)
-    return ModelChain(model=FallbackModel(*models, fallback_on=(ModelAPIError,)), names=names)
+    bounded = [DeadlineModel(model, settings.llm_timeout_seconds) for model in models]
+    if len(bounded) == 1:
+        return ModelChain(model=bounded[0], names=names)
+    return ModelChain(model=FallbackModel(*bounded, fallback_on=(ModelAPIError,)), names=names)
