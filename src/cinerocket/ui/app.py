@@ -9,6 +9,7 @@ from cinerocket.ui.components import (
     ASSISTANT_AVATAR,
     USER_AVATAR,
     Turn,
+    escape_markdown,
     render_empty_state,
     render_examples,
     render_intro,
@@ -68,7 +69,7 @@ def new_conversation() -> None:
 
 def ask(question: str) -> None:
     with st.chat_message("user", avatar=USER_AVATAR):
-        st.markdown(question)
+        st.markdown(escape_markdown(question))
     with st.chat_message("assistant", avatar=ASSISTANT_AVATAR), st.spinner("Consultando a camada Gold…"):
         try:
             response = get_client().ask(question, st.session_state.session_id)

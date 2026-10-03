@@ -7,11 +7,13 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from cinerocket.application.charts import chart_for
+from cinerocket.application.labels import humanize
 from cinerocket.domain.models import ChatResponse, QueryResult
 from cinerocket.ui.charts import build_figure
 from cinerocket.ui.examples import EXAMPLE_QUESTIONS
 
 USER_AVATAR = ":material/person:"
+DOLLAR = "$"
 ASSISTANT_AVATAR = ":material/movie:"
 
 
@@ -20,6 +22,10 @@ class Turn:
     question: str
     response: ChatResponse | None = None
     error: str | None = None
+
+
+def escape_markdown(text: str) -> str:
+    return text.replace(DOLLAR, "\\" + DOLLAR)
 
 
 def render_intro() -> None:
@@ -40,7 +46,7 @@ def render_empty_state() -> str | None:
 
 def render_turn(turn: Turn) -> None:
     with st.chat_message("user", avatar=USER_AVATAR):
-        st.markdown(turn.question)
+        st.markdown(escape_markdown(turn.question))
     with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
         if turn.error:
             st.error(turn.error)
@@ -49,7 +55,7 @@ def render_turn(turn: Turn) -> None:
 
 
 def render_response(response: ChatResponse) -> None:
-    st.markdown(response.answer)
+    st.markdown(escape_markdown(response.answer))
     result = response.result
     figure = response_figure(response)
     tabs = [
@@ -74,7 +80,7 @@ def render_response(response: ChatResponse) -> None:
             st.code(response.sql, language="sql", wrap_lines=True)
     if response.assumptions:
         with containers["Premissas"]:
-            st.markdown("\n".join(f"- {item}" for item in response.assumptions))
+            st.markdown(escape_markdown("\n".join(f"- {item}" for item in response.assumptions)))
     render_meta(response)
 
 
@@ -91,10 +97,15 @@ def render_result_table(result: QueryResult) -> None:
         st.info("A consulta não retornou linhas.")
         return
     frame = pd.DataFrame(result.rows, columns=result.columns)
-    numeric = frame.select_dtypes("number").columns
-    config: dict[str, Any] = {column: st.column_config.NumberColumn(format="localized") for column in numeric}
+    numeric = set(frame.select_dtypes("number").columns)
+    config: dict[str, Any] = {
+        column: st.column_config.NumberColumn(humanize(column), format="localized")
+        if column in numeric
+        else st.column_config.TextColumn(humanize(column))
+        for column in frame.columns
+    }
     st.dataframe(frame, hide_index=True, column_config=config, width="stretch")
-    footer = f"{result.row_count} linhas"
+    footer = f"{result.row_count} {'linha' if result.row_count == 1 else 'linhas'}"
     if result.truncated:
         footer += " · resultado limitado"
     left, right = st.columns([3, 1], vertical_alignment="center")

@@ -27,3 +27,11 @@ def test_swaps_axes_when_model_inverts_them() -> None:
 
     assert chart is not None
     assert (chart.x, chart.y) == ("genero", "lucro")
+
+
+def test_inferred_chart_title_uses_readable_labels() -> None:
+    result = QueryResult(sql="", columns=["titulo", "receita_brl"], rows=[["Duna", 2.0], ["Barbie", 7.0]])
+
+    chart = infer_chart(result)
+
+    assert chart is not None and chart.title == "Receita (R$) por título"

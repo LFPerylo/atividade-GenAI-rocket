@@ -1,3 +1,4 @@
+from cinerocket.application.labels import humanize
 from cinerocket.domain.models import ChartSpec, QueryResult
 
 MAX_CHART_ROWS = 25
@@ -13,11 +14,12 @@ def infer_chart(result: QueryResult) -> ChartSpec | None:
     if len(result.columns) != 2 or not 2 <= result.row_count <= MAX_CHART_ROWS:
         return None
     label, value = result.columns
+    title = f"{humanize(value)} por {humanize(label).lower()}"
     if not is_numeric_column(result, 1):
         return None
     if TEMPORAL_TOKENS & set(label.lower().split("_")) and is_numeric_column(result, 0):
-        return ChartSpec(kind="line", x=label, y=value, title=f"{value} por {label}")
-    return ChartSpec(kind="horizontal_bar", x=label, y=value, title=f"{value} por {label}")
+        return ChartSpec(kind="line", x=label, y=value, title=title)
+    return ChartSpec(kind="horizontal_bar", x=label, y=value, title=title)
 
 
 def align_chart(spec: ChartSpec | None, result: QueryResult) -> ChartSpec | None:
