@@ -8,6 +8,7 @@ Atividade GenAI do Rocket Lab 26.2 (Visagio).
 
 - **Text-to-SQL com autocorreção**: o agente explora o schema, confirma valores reais, testa o SQL e corrige a partir do erro do banco antes de responder.
 - **Respostas rastreáveis**: os números exibidos vêm da reexecução do SQL final no banco, nunca de texto gerado pelo modelo. O SQL final precisa ter sido testado pelo agente na mesma análise.
+- **Few-shot dinâmico**: 21 exemplos de referência (pergunta, premissas e SQL validado) em `src/cinerocket/agent/examples.yaml`. A cada pergunta, os 3 mais parecidos são recuperados por similaridade (embeddings locais, sem custo de cota) e injetados no prompt, para ensinar critérios como lucro só com receita e orçamento informados, mínimo de votos e margem agregada.
 - **Agente híbrido**: busca semântica nas 95 mil sinopses (embeddings locais multilíngues) combinada com SQL, para perguntas como "filmes sobre viagem no tempo com melhor nota IMDb".
 - **Guardrails**: conexão SQLite read-only, `PRAGMA query_only`, validação por AST (sqlglot) que aceita apenas uma consulta `SELECT`/`WITH`, lista de tabelas permitidas, bloqueio de funções perigosas, limite de linhas, timeout de consulta e recusa de perguntas fora do escopo.
 - **Fallback entre modelos**: cadeia de modelos gratuitos do OpenRouter com Gemini como última opção. Erros de provedor (429, 5xx, timeout) passam automaticamente para o próximo modelo, sem retentativas que queimem a cota.
@@ -185,6 +186,7 @@ Todas as categorias do enunciado estão na barra lateral da UI e no conjunto de 
 
 - **Schema completo no prompt em vez de schema linking**: as 10 tabelas cabem com folga no contexto. Isso evita uma chamada extra por pergunta, o que importa com 50 requisições por dia, e as ferramentas `describe_table`/`distinct_values` cobrem a verificação de valores.
 - **Glossário de negócio no prompt**: regras que o schema não revela. Exemplos: receita = faturamento = bilheteria; `lucro_brl` vale 0 sem receita e é igual à receita sem orçamento; margem agregada por grupo, para não ser distorcida por receitas ínfimas; filmes futuros no catálogo; nomes de gênero em inglês.
+- **Exemplos ensinam critérios, não respostas**: cada exemplo guarda o padrão do SQL e as premissas, nunca o resultado, e nenhum repete as perguntas da avaliação (um teste garante isso), para a medição não virar cópia. Pergunta e premissas são indexadas juntas, o que recupera exemplos do mesmo conceito (margem, votos, elenco) e não só de frases parecidas. Perguntas fora do domínio ficam abaixo do corte de similaridade e seguem sem exemplos.
 - **Dados vêm do banco, não do modelo**: o `output_validator` rejeita SQL final não testado e o serviço reexecuta a consulta para montar a tabela e o gráfico.
 - **Fallback no cliente**, com `max_retries=0` e prazo total por chamada (`DeadlineModel`): um 429, um modelo removido do catálogo ou um modelo que demora a terminar a geração passam para o próximo da cadeia em vez de repetir a chamada ou travar a pergunta. O OpenRouter responde o status 200 na hora e entrega o corpo devagar, então só um timeout de leitura não basta.
 - **Ordem da cadeia por desempenho medido**: `qwen/qwen3.8-27b:free` e `nvidia/nemotron-3-super-120b-a12b:free` responderam com tool calling em 1 a 2 s. O `nvidia/nemotron-3.5-lightning:free` chegou a levar 2 minutos por geração com o prompt completo e ficou como reserva.
@@ -215,6 +217,8 @@ Resultado medido em 02/10/2026 com `nvidia/nemotron-3.5-lightning:free`: 7 das 8
 | `APP_DB_PATH` | `data/app.db` | Sessões e cache |
 | `INDEX_DIR` | `data/index` | Índice semântico |
 | `EMBEDDING_MODEL` | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Modelo de embeddings |
+| `FEW_SHOT_LIMIT` | `3` | Exemplos de referência por pergunta; `0` desliga |
+| `FEW_SHOT_MIN_SCORE` | `0.35` | Similaridade mínima para um exemplo entrar no prompt |
 | `MAX_ROWS` | `200` | Máximo de linhas retornadas por consulta |
 | `QUERY_TIMEOUT_SECONDS` | `45` | Timeout de cada consulta SQL |
 | `LLM_TIMEOUT_SECONDS` | `45` | Prazo total de cada chamada ao modelo antes de passar ao próximo |
