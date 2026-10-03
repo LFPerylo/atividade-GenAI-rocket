@@ -37,6 +37,7 @@ app.add_typer(cache_app, name="cache")
 
 console = Console()
 EXIT_COMMANDS = {"sair", "exit", "quit", ":q"}
+GRACEFUL_SHUTDOWN_SECONDS = 5
 
 
 def load_settings() -> Settings:
@@ -127,7 +128,14 @@ def serve(
     reload: Annotated[bool, typer.Option()] = False,
 ) -> None:
     """Sobe a API FastAPI."""
-    uvicorn.run("cinerocket.api.app:create_app", factory=True, host=host, port=port, reload=reload)
+    uvicorn.run(
+        "cinerocket.api.app:create_app",
+        factory=True,
+        host=host,
+        port=port,
+        reload=reload,
+        timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_SECONDS,
+    )
 
 
 @app.command()
