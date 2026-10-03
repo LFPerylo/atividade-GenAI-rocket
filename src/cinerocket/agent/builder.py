@@ -5,6 +5,7 @@ from pydantic_ai.capabilities import ProcessHistory
 from pydantic_ai.models import Model
 
 from cinerocket.agent.deps import AgentDeps
+from cinerocket.agent.examples import render_examples
 from cinerocket.agent.history import keep_recent_turns
 from cinerocket.agent.prompts import SYSTEM_INSTRUCTIONS, reference_date_instructions, schema_instructions
 from cinerocket.agent.tools import (
@@ -40,9 +41,13 @@ def build_agent(model: Model | None, *, retries: int, history_max_turns: int) ->
 
     @agent.instructions
     def dynamic_context(ctx: RunContext[AgentDeps]) -> str:
-        return "\n\n".join(
-            (reference_date_instructions(ctx.deps.today), schema_instructions(ctx.deps.catalog.describe()))
-        )
+        sections = [
+            reference_date_instructions(ctx.deps.today),
+            schema_instructions(ctx.deps.catalog.describe()),
+        ]
+        if ctx.deps.examples:
+            sections.append(render_examples(ctx.deps.examples))
+        return "\n\n".join(sections)
 
     @agent.output_validator
     def check_answer(ctx: RunContext[AgentDeps], answer: AgentAnswer) -> AgentAnswer:

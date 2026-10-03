@@ -38,7 +38,7 @@ class AnalyticsService:
     def __init__(
         self,
         agent: AnalystAgent,
-        deps_factory: Callable[[], AgentDeps],
+        deps_factory: Callable[[str], AgentDeps],
         sessions: SessionStore,
         cache: ResponseCache,
         question_guard: QuestionGuard,
@@ -72,7 +72,7 @@ class AnalyticsService:
             self._remember(session_id, self._replay(cleaned, response), response)
             return response
 
-        deps = self._deps_factory()
+        deps = await anyio.to_thread.run_sync(self._deps_factory, cleaned)
         answer, messages, usage, model_name = await self._run_agent(cleaned, deps, history)
         result = await self._final_result(answer, deps)
         response = ChatResponse(

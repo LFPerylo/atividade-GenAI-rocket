@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     embedding_cache_dir: Path = Path("data/models")
     embedding_batch_size: int = 256
     semantic_search_limit: int = Field(default=30, ge=1, le=100)
+    few_shot_limit: int = Field(default=3, ge=0, le=10)
+    few_shot_min_score: float = Field(default=0.35, ge=0, le=1)
     excluded_tables: Annotated[frozenset[str], NoDecode] = frozenset({"alembic_version"})
 
     max_rows: int = Field(default=200, ge=1)

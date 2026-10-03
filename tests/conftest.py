@@ -82,6 +82,7 @@ def settings(database_path: Path, tmp_path: Path) -> Settings:
         index_dir=tmp_path / "index",
         openrouter_api_key=None,
         google_api_key=None,
+        few_shot_limit=0,
     )
 
 

@@ -49,6 +49,8 @@ real a camada Gold do Data Lakehouse (banco SQLite com modelo dimensional de fil
 - Pessoas: dim_people.tipo_pessoa ∈ ('Ator', 'Diretor', 'Roteirista'), ligadas aos filmes por
   bridge_movie_person. A mesma pessoa possui um sk_person_id por papel; para duplas (ex.: ator-diretor),
   junte bridge_movie_person duas vezes no mesmo filme e desconsidere pares com o mesmo nome.
+  O nome 'English' em dim_people é ruído de carga (um idioma registrado como pessoa): exclua-o de
+  rankings de pessoas e registre isso nas premissas.
 - Gêneros (dim_genres.nome_genero, em inglês): Action, Adventure, Animation, Comedy, Crime, Documentary,
   Drama, Family, Fantasy, History, Horror, Music, Mystery, Romance, Science Fiction, Thriller, Tv Movie, War,
   Western.

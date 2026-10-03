@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import date
 
+from cinerocket.agent.examples import SqlExample
 from cinerocket.database.catalog import SchemaCatalog
 from cinerocket.database.executor import QueryExecutor
 from cinerocket.domain.models import QueryResult
@@ -19,6 +20,7 @@ class AgentDeps:
     today: date
     preview_rows: int
     semantic_limit: int
+    examples: list[SqlExample] = field(default_factory=list)
     executed: dict[str, QueryResult] = field(default_factory=dict)
 
     def was_executed(self, sql: str) -> bool:

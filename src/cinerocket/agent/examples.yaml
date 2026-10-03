@@ -1,0 +1,242 @@
+- question: Quais são os 10 filmes com maior orçamento em dólares?
+  notes:
+    - Valores em dólar usam as colunas *_usd; o padrão em reais é *_brl.
+    - Orçamento informado significa orcamento_usd > 0.
+  sql: |
+    SELECT m.titulo, f.orcamento_usd
+    FROM dim_movies m JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE f.orcamento_usd > 0
+    ORDER BY f.orcamento_usd DESC
+    LIMIT 10
+
+- question: Qual foi o faturamento total dos filmes lançados em 2019?
+  notes:
+    - Faturamento é sinônimo de receita e bilheteria (receita_brl).
+    - Considere apenas filmes lançados e com receita informada.
+  sql: |
+    SELECT ROUND(SUM(f.receita_brl), 2) AS faturamento_total_brl, COUNT(*) AS filmes_com_receita
+    FROM dim_movies m JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE m.ano_lancamento = 2019 AND m.status_filme = 'Lançado' AND f.receita_brl > 0
+
+- question: Quais filmes de 2022 tiveram prejuízo?
+  notes:
+    - Prejuízo é lucro_brl < 0, avaliado só com receita e orçamento informados, senão o lucro não é confiável.
+  sql: |
+    SELECT m.titulo, f.orcamento_brl, f.receita_brl, f.lucro_brl
+    FROM dim_movies m JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE m.ano_lancamento = 2022 AND f.receita_brl > 0 AND f.orcamento_brl > 0 AND f.lucro_brl < 0
+    ORDER BY f.lucro_brl ASC
+    LIMIT 10
+
+- question: Qual o lucro total por ano de lançamento?
+  notes:
+    - Lucro agregado considera apenas filmes com receita e orçamento informados.
+    - Séries por ano são ordenadas pelo ano e combinam com gráfico de linha.
+  sql: |
+    SELECT m.ano_lancamento, ROUND(SUM(f.lucro_brl), 2) AS lucro_total_brl
+    FROM dim_movies m JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE f.receita_brl > 0 AND f.orcamento_brl > 0 AND m.status_filme = 'Lançado'
+    GROUP BY m.ano_lancamento
+    ORDER BY m.ano_lancamento
+
+- question: Qual a margem de lucro da Universal Pictures?
+  notes:
+    - Margem de um grupo é agregada, SUM(lucro) / SUM(receita), para não ser distorcida por receitas ínfimas.
+    - Nomes de produtoras são comparados sem diferenciar maiúsculas.
+  sql: |
+    SELECT c.nome_produtora, ROUND(SUM(f.lucro_brl) * 100.0 / SUM(f.receita_brl), 2) AS margem_pct,
+           COUNT(DISTINCT f.sk_movie_id) AS filmes
+    FROM dim_companies c
+    JOIN bridge_movie_company bc USING (sk_company_id)
+    JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE LOWER(c.nome_produtora) = LOWER('Universal Pictures') AND f.receita_brl > 0 AND f.orcamento_brl > 0
+    GROUP BY c.nome_produtora
+
+- question: Qual o retorno sobre o orçamento (ROI) por gênero?
+  notes:
+    - ROI agregado é SUM(lucro) / SUM(orçamento), com receita e orçamento informados.
+    - Gêneros ficam em inglês no banco e são apresentados em português na resposta.
+  sql: |
+    SELECT g.nome_genero, ROUND(SUM(f.lucro_brl) * 100.0 / SUM(f.orcamento_brl), 2) AS roi_pct
+    FROM dim_genres g
+    JOIN bridge_movie_genre bg USING (sk_genre_id)
+    JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE f.receita_brl > 0 AND f.orcamento_brl > 0
+    GROUP BY g.nome_genero
+    ORDER BY roi_pct DESC
+
+- question: Quais gêneros têm a maior bilheteria total?
+  notes:
+    - Um filme com vários gêneros entra no total de cada um deles.
+  sql: |
+    SELECT g.nome_genero, ROUND(SUM(f.receita_brl), 2) AS bilheteria_total_brl
+    FROM dim_genres g
+    JOIN bridge_movie_genre bg USING (sk_genre_id)
+    JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE f.receita_brl > 0
+    GROUP BY g.nome_genero
+    ORDER BY bilheteria_total_brl DESC
+    LIMIT 10
+
+- question: Quais filmes de terror têm a melhor nota no IMDb?
+  notes:
+    - Terror corresponde ao gênero 'Horror'.
+    - Rankings de filmes por nota exigem mínimo de votos (qtd_imdb >= 100) para evitar notas de poucos votos.
+  sql: |
+    SELECT m.titulo, m.ano_lancamento, f.nota_imdb, f.qtd_imdb
+    FROM dim_movies m
+    JOIN fact_movies_performance f USING (sk_movie_id)
+    JOIN bridge_movie_genre bg USING (sk_movie_id)
+    JOIN dim_genres g USING (sk_genre_id)
+    WHERE g.nome_genero = 'Horror' AND f.nota_imdb > 0 AND f.qtd_imdb >= 100
+    ORDER BY f.nota_imdb DESC, f.qtd_imdb DESC
+    LIMIT 10
+
+- question: Qual a nota média no TMDB por gênero?
+  notes:
+    - Médias agregadas por categoria não precisam de corte de votos; notas nulas ou 0 são ignoradas.
+  sql: |
+    SELECT g.nome_genero, ROUND(AVG(f.nota_tmdb), 2) AS nota_media_tmdb, COUNT(*) AS filmes
+    FROM dim_genres g
+    JOIN bridge_movie_genre bg USING (sk_genre_id)
+    JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE f.nota_tmdb > 0
+    GROUP BY g.nome_genero
+    ORDER BY nota_media_tmdb DESC
+
+- question: Quais filmes receberam mais votos no IMDb?
+  notes:
+    - Volume de votos é qtd_imdb; não confundir com avaliações dos usuários da plataforma (dim_reviews).
+  sql: |
+    SELECT m.titulo, f.qtd_imdb, f.nota_imdb
+    FROM dim_movies m JOIN fact_movies_performance f USING (sk_movie_id)
+    ORDER BY f.qtd_imdb DESC
+    LIMIT 10
+
+- question: Em quantos filmes o Tom Hanks atuou?
+  notes:
+    - Pessoas são buscadas por nome com LIKE e filtradas pelo papel (tipo_pessoa = 'Ator').
+  sql: |
+    SELECT p.nome_pessoa, COUNT(DISTINCT b.sk_movie_id) AS filmes
+    FROM dim_people p JOIN bridge_movie_person b USING (sk_person_id)
+    WHERE p.tipo_pessoa = 'Ator' AND p.nome_pessoa LIKE '%Tom Hanks%'
+    GROUP BY p.sk_person_id
+
+- question: Quais diretores dirigiram mais filmes desde 2020?
+  notes:
+    - Períodos passados consideram apenas filmes lançados até hoje.
+    - O nome 'English' em dim_people é ruído de carga e fica fora de rankings de pessoas.
+  sql: |
+    SELECT p.nome_pessoa, COUNT(DISTINCT m.sk_movie_id) AS filmes
+    FROM dim_people p
+    JOIN bridge_movie_person b USING (sk_person_id)
+    JOIN dim_movies m USING (sk_movie_id)
+    WHERE p.tipo_pessoa = 'Diretor' AND p.nome_pessoa <> 'English' AND m.status_filme = 'Lançado'
+      AND m.data_lancamento >= '2020-01-01' AND m.data_lancamento <= DATE('now')
+    GROUP BY p.sk_person_id
+    ORDER BY filmes DESC
+    LIMIT 10
+
+- question: Quais atores mais trabalharam com o diretor Christopher Nolan?
+  notes:
+    - A relação entre pessoas passa pelo filme; junte bridge_movie_person duas vezes no mesmo sk_movie_id.
+  sql: |
+    SELECT a.nome_pessoa AS ator, COUNT(DISTINCT bd.sk_movie_id) AS filmes_juntos
+    FROM dim_people d
+    JOIN bridge_movie_person bd ON bd.sk_person_id = d.sk_person_id
+    JOIN bridge_movie_person ba ON ba.sk_movie_id = bd.sk_movie_id
+    JOIN dim_people a ON a.sk_person_id = ba.sk_person_id AND a.tipo_pessoa = 'Ator'
+    WHERE d.tipo_pessoa = 'Diretor' AND d.nome_pessoa = 'Christopher Nolan' AND a.nome_pessoa <> d.nome_pessoa
+    GROUP BY a.sk_person_id
+    ORDER BY filmes_juntos DESC
+    LIMIT 10
+
+- question: Qual roteirista escreveu mais filmes?
+  notes:
+    - Roteiristas são tipo_pessoa = 'Roteirista'.
+    - O nome 'English' em dim_people é ruído de carga e fica fora de rankings de pessoas.
+  sql: |
+    SELECT p.nome_pessoa, COUNT(DISTINCT b.sk_movie_id) AS filmes
+    FROM dim_people p JOIN bridge_movie_person b USING (sk_person_id)
+    WHERE p.tipo_pessoa = 'Roteirista' AND p.nome_pessoa <> 'English'
+    GROUP BY p.sk_person_id
+    ORDER BY filmes DESC
+    LIMIT 10
+
+- question: Quais produtoras lançaram mais filmes de animação?
+  notes:
+    - Animação corresponde ao gênero 'Animation'; contagens de filmes usam COUNT(DISTINCT).
+  sql: |
+    SELECT c.nome_produtora, COUNT(DISTINCT bc.sk_movie_id) AS filmes_animacao
+    FROM dim_companies c
+    JOIN bridge_movie_company bc USING (sk_company_id)
+    JOIN bridge_movie_genre bg ON bg.sk_movie_id = bc.sk_movie_id
+    JOIN dim_genres g ON g.sk_genre_id = bg.sk_genre_id
+    WHERE g.nome_genero = 'Animation'
+    GROUP BY c.sk_company_id
+    ORDER BY filmes_animacao DESC
+    LIMIT 10
+
+- question: Quantos filmes ainda não foram lançados, por situação?
+  notes:
+    - O catálogo tem filmes futuros; status_filme distingue Lançado, Em Produção, Pós-Produção e Planejado.
+  sql: |
+    SELECT status_filme, COUNT(*) AS filmes
+    FROM dim_movies
+    WHERE status_filme <> 'Lançado'
+    GROUP BY status_filme
+    ORDER BY filmes DESC
+
+- question: Quais filmes têm estreia prevista para os próximos meses?
+  notes:
+    - Datas futuras são comparadas com a data de hoje via DATE('now').
+  sql: |
+    SELECT titulo, data_lancamento, status_filme
+    FROM dim_movies
+    WHERE data_lancamento > DATE('now')
+    ORDER BY data_lancamento
+    LIMIT 10
+
+- question: Qual a duração média dos filmes por gênero?
+  notes:
+    - Duração está em duracao_minutos; valores nulos ou 0 são ignorados.
+  sql: |
+    SELECT g.nome_genero, ROUND(AVG(m.duracao_minutos), 1) AS duracao_media_min
+    FROM dim_genres g
+    JOIN bridge_movie_genre bg USING (sk_genre_id)
+    JOIN dim_movies m USING (sk_movie_id)
+    WHERE m.duracao_minutos > 0
+    GROUP BY g.nome_genero
+    ORDER BY duracao_media_min DESC
+
+- question: Quais filmes têm a pior nota média dos usuários, com pelo menos 5 avaliações?
+  notes:
+    - Avaliações da plataforma ficam em dim_reviews (agregado por filme) com escala 0 a 10.
+  sql: |
+    SELECT m.titulo, r.nota_media_usuarios, r.qtd_avaliacoes_usuarios
+    FROM dim_reviews r JOIN dim_movies m USING (sk_movie_id)
+    WHERE r.qtd_avaliacoes_usuarios >= 5 AND r.nota_media_usuarios IS NOT NULL
+    ORDER BY r.nota_media_usuarios ASC
+    LIMIT 10
+
+- question: O que os usuários comentaram sobre o filme Blue Beetle?
+  notes:
+    - Comentários individuais ficam em movie_reviews (name, rating, text); títulos são buscados com LIKE.
+  sql: |
+    SELECT m.titulo, mr.name AS usuario, mr.rating AS nota, mr.text AS comentario
+    FROM movie_reviews mr JOIN dim_movies m USING (sk_movie_id)
+    WHERE m.titulo LIKE 'Blue Beetle'
+    ORDER BY mr.created_at DESC
+    LIMIT 10
+
+- question: Quais filmes sobre assaltos a banco tiveram a maior bilheteria?
+  semantic: true
+  notes:
+    - Temas de enredo pedem search_synopses primeiro; os movie_id retornados entram no SQL via IN.
+    - Depois combine com as métricas pedidas e filtre receita informada.
+  sql: |
+    SELECT m.titulo, f.receita_brl
+    FROM dim_movies m JOIN fact_movies_performance f USING (sk_movie_id)
+    WHERE m.sk_movie_id IN (:ids_retornados_por_search_synopses) AND f.receita_brl > 0
+    ORDER BY f.receita_brl DESC
+    LIMIT 10

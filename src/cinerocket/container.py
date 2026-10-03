@@ -4,6 +4,7 @@ from functools import partial
 
 from cinerocket.agent.builder import build_agent
 from cinerocket.agent.deps import AgentDeps
+from cinerocket.agent.examples import ExampleRetriever, load_examples
 from cinerocket.agent.prompts import PROMPT_VERSION
 from cinerocket.application.service import AnalyticsService, ServicePolicy
 from cinerocket.config import Settings
@@ -45,6 +46,9 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
     )
     index = NumpyIndexRepository(settings.index_dir)
     semantic = SemanticSearch(embedder, index, movies)
+    retriever = ExampleRetriever(
+        load_examples(), embedder, settings.few_shot_limit, settings.few_shot_min_score
+    )
     chain = model_chain or build_model_chain(settings)
     agent = build_agent(
         chain.model,
@@ -58,6 +62,7 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
             catalog=catalog,
             executor=executor,
             semantic=semantic,
+            retriever=retriever,
             preview_rows=settings.preview_rows,
             semantic_limit=settings.semantic_search_limit,
         ),
@@ -68,7 +73,7 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
             request_limit=settings.agent_request_limit,
             history_max_turns=settings.history_max_turns,
         ),
-        cache_scope=lambda: (catalog.fingerprint, chain.fingerprint, PROMPT_VERSION),
+        cache_scope=lambda: (catalog.fingerprint, chain.fingerprint, PROMPT_VERSION, retriever.version),
     )
     return Container(
         settings=settings,
@@ -85,10 +90,12 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
 
 
 def new_agent_deps(
+    question: str,
     *,
     catalog: SchemaCatalog,
     executor: QueryExecutor,
     semantic: SemanticSearch,
+    retriever: ExampleRetriever,
     preview_rows: int,
     semantic_limit: int,
 ) -> AgentDeps:
@@ -99,4 +106,5 @@ def new_agent_deps(
         today=date.today(),
         preview_rows=preview_rows,
         semantic_limit=semantic_limit,
+        examples=retriever.retrieve(question),
     )
