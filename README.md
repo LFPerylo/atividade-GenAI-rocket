@@ -212,7 +212,7 @@ Resultado medido em 02/10/2026 com `nvidia/nemotron-3.5-lightning:free`: 7 das 8
 | `OPENROUTER_API_KEY` | — | Chave do OpenRouter |
 | `OPENROUTER_MODELS` | 5 modelos `:free` | Lista JSON, em ordem de preferência; o catálogo `:free` muda com frequência, confira em <https://openrouter.ai/models?q=:free> |
 | `GOOGLE_API_KEY` | — | Chave do Gemini (último fallback) |
-| `GEMINI_MODEL` | `gemini-flash-latest` | Modelo Gemini |
+| `GEMINI_MODELS` | `gemini-flash-latest`, `gemini-flash-lite-latest` | Lista JSON de modelos Gemini, usados depois dos do OpenRouter |
 | `DATABASE_PATH` | `data/cinerocket.db` | Banco da camada Gold |
 | `APP_DB_PATH` | `data/app.db` | Sessões e cache |
 | `INDEX_DIR` | `data/index` | Índice semântico |

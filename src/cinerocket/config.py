@@ -20,7 +20,9 @@ class Settings(BaseSettings):
         ]
     )
     google_api_key: SecretStr | None = None
-    gemini_model: str = "gemini-flash-latest"
+    gemini_models: list[str] = Field(
+        default_factory=lambda: ["gemini-flash-latest", "gemini-flash-lite-latest"]
+    )
 
     database_path: Path = Path("data/cinerocket.db")
     app_db_path: Path = Path("data/app.db")

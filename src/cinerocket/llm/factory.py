@@ -40,7 +40,7 @@ def build_model_chain(settings: Settings) -> ModelChain:
         models.extend(OpenRouterModel(name, provider=provider) for name in settings.openrouter_models)
     if settings.google_api_key is not None:
         google = GoogleProvider(api_key=settings.google_api_key.get_secret_value())
-        models.append(GoogleModel(settings.gemini_model, provider=google))
+        models.extend(GoogleModel(name, provider=google) for name in settings.gemini_models)
     if not models:
         raise ConfigurationError("Configure OPENROUTER_API_KEY e/ou GOOGLE_API_KEY no arquivo .env.")
     names = tuple(model.model_name for model in models)
