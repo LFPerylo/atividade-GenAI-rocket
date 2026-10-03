@@ -38,6 +38,7 @@ app.add_typer(cache_app, name="cache")
 console = Console()
 EXIT_COMMANDS = {"sair", "exit", "quit", ":q"}
 GRACEFUL_SHUTDOWN_SECONDS = 5
+PACKAGE_DIR = Path(__file__).resolve().parent.parent
 
 
 def load_settings() -> Settings:
@@ -134,6 +135,7 @@ def serve(
         host=host,
         port=port,
         reload=reload,
+        reload_dirs=[str(PACKAGE_DIR)] if reload else None,
         timeout_graceful_shutdown=GRACEFUL_SHUTDOWN_SECONDS,
     )
 
@@ -144,7 +146,7 @@ def ui(
     port: Annotated[int, typer.Option()] = 8501,
 ) -> None:
     """Sobe a interface Streamlit (requer a API em execução)."""
-    script = Path(__file__).resolve().parent.parent / "ui" / "app.py"
+    script = PACKAGE_DIR / "ui" / "app.py"
     command = [
         sys.executable,
         "-m",
