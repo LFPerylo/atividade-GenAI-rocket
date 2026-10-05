@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.metadata import version
@@ -23,7 +24,9 @@ def create_app(container: Container | None = None) -> FastAPI:
             app.state.container = build_container(settings)
         else:
             app.state.container = container
+        warm_up = asyncio.create_task(asyncio.to_thread(app.state.container.retriever.warm_up))
         yield
+        await warm_up
 
     app = FastAPI(
         title="CineRocket Analytics API",

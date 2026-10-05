@@ -25,7 +25,11 @@ class Turn:
 
 
 def escape_markdown(text: str) -> str:
-    return text.replace(DOLLAR, "\\" + DOLLAR)
+    segments = text.split("`")
+    return "`".join(
+        segment if index % 2 else segment.replace(DOLLAR, "\\" + DOLLAR)
+        for index, segment in enumerate(segments)
+    )
 
 
 def render_intro() -> None:

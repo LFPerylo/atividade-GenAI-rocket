@@ -32,6 +32,7 @@ class Container:
     embedder: FastEmbedEmbedder
     index: NumpyIndexRepository
     semantic: SemanticSearch
+    retriever: ExampleRetriever
     model_chain: ModelChain
     service: AnalyticsService
 
@@ -84,6 +85,7 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
         embedder=embedder,
         index=index,
         semantic=semantic,
+        retriever=retriever,
         model_chain=chain,
         service=service,
     )

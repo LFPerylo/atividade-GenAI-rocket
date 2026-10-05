@@ -13,6 +13,7 @@ from cinerocket.semantic.embedder import Embedder, Vector
 logger = logging.getLogger(__name__)
 
 DEFAULT_EXAMPLES = Path(__file__).with_name("examples.yaml")
+WARM_UP_QUESTION = "Quais filmes tiveram a maior receita?"
 
 
 class SqlExample(BaseModel):
@@ -62,6 +63,10 @@ class ExampleRetriever:
     @cached_property
     def _vectors(self) -> Vector:
         return self._embedder.embed_documents([example.document for example in self._examples])
+
+    def warm_up(self) -> None:
+        logger.info("Carregando o modelo de embeddings dos exemplos de referência.")
+        self.retrieve(WARM_UP_QUESTION)
 
     def retrieve(self, question: str) -> list[SqlExample]:
         if not self._examples or self._limit == 0:

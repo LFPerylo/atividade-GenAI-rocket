@@ -5,6 +5,7 @@ import numpy as np
 from cinerocket.agent.examples import ExampleRetriever, SqlExample, load_examples, render_examples
 from cinerocket.application.keys import normalize_question
 from cinerocket.evaluation.dataset import load_cases
+from cinerocket.guardrails.sql import SqlGuard
 from cinerocket.semantic.embedder import Vector, normalize
 
 VOCABULARY = ("lucro", "nota", "ator", "genero")
@@ -46,3 +47,25 @@ def test_bundled_examples_never_leak_evaluation_questions() -> None:
 
     assert len(examples) >= 20
     assert not evaluation & {normalize_question(example.question) for example in examples}
+
+
+GOLD_TABLES = (
+    "dim_movies",
+    "fact_movies_performance",
+    "dim_genres",
+    "dim_people",
+    "dim_companies",
+    "dim_reviews",
+    "movie_reviews",
+    "bridge_movie_genre",
+    "bridge_movie_person",
+    "bridge_movie_company",
+)
+
+
+def test_bundled_examples_are_read_only_queries_over_gold_tables() -> None:
+    guard = SqlGuard(lambda: GOLD_TABLES)
+
+    for example in load_examples():
+        if not example.semantic:
+            guard.validate(example.sql)

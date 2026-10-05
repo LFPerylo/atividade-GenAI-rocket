@@ -98,7 +98,7 @@ Habilita a busca por enredo nas sinopses. Na primeira execução baixa o modelo 
 make index
 ```
 
-Sem o índice, o agente funciona normalmente e a ferramenta de busca semântica fica oculta.
+Sem o índice, o agente funciona normalmente e a ferramenta de busca semântica fica oculta. O modelo de embeddings também é usado para escolher os exemplos few-shot; se ele ainda não foi baixado por este passo, a API o baixa uma única vez em segundo plano ao iniciar (cerca de 220 MB); uma pergunta feita antes de o download terminar demora mais na primeira vez.
 
 ### 5. Usar
 
@@ -201,7 +201,7 @@ Todas as categorias do enunciado estão na barra lateral da UI e no conjunto de 
 uv run cinerocket eval run --limit 5 --delay 5
 ```
 
-Cada pergunta usa de 2 a 5 requisições ao modelo; planeje a execução pela cota diária.
+Cada pergunta usa de 2 a 7 requisições ao modelo, e a cota gratuita do OpenRouter é de 50 por dia: rode a avaliação completa em lotes com `--case` ou `--limit`.
 
 Resultados medidos: na primeira versão, sem few-shot, 7 das 8 perguntas avaliadas acertaram, e a falha foi de interpretação ("gênero com maior margem média" sem o filtro `orcamento_brl > 0`). Com o few-shot dinâmico, os 5 casos mais sensíveis a critério (maiores margens, divergência TMDB × IMDb, dupla ator-diretor, produtora com maior lucro e gênero com maior margem) acertaram todos, com 2 a 6 requisições cada. Modelos gratuitos variam entre execuções, então trate esses números como indicativos.
 
