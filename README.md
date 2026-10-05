@@ -4,6 +4,35 @@ Agente de IA que responde, em linguagem natural, perguntas sobre o catálogo de 
 
 Atividade GenAI do Rocket Lab 26.2 (Visagio).
 
+## Teste rápido (avaliação)
+
+Só são necessários o banco da atividade e uma chave **gratuita** do OpenRouter (sem cartão, em <https://openrouter.ai/keys>). Todos os modelos usados são gratuitos.
+
+```bash
+git clone https://github.com/LFPerylo/atividade-GenAI-rocket.git && cd atividade-GenAI-rocket && make install
+```
+
+```bash
+cp "/caminho/para/cinerocket.db" data/cinerocket.db && cp .env.example .env
+```
+
+Preencha `OPENROUTER_API_KEY` no `.env` e pergunte:
+
+```bash
+uv run cinerocket ask 'Quais são os 10 filmes com maior receita em R$?'
+```
+
+Para a interface web, rode `make api` e, em outro terminal, `make ui` e abra <http://localhost:8501>.
+
+**Por que continua funcionando depois da entrega:** o catálogo de modelos `:free` do OpenRouter muda com frequência (modelos entram, saem e ficam lotados). Por isso:
+- ao iniciar, o app consulta o catálogo público do OpenRouter (gratuito, não consome cota) e descarta da cadeia os modelos que saíram ou perderam suporte a tool calling, registrando um aviso no log;
+- a cadeia termina no `openrouter/free`, o roteador que o Guia OpenRouter do Rocket Lab recomenda como padrão, que sempre escolhe um modelo gratuito disponível no momento;
+- erros 429 (pool lotado) e respostas lentas passam automaticamente para o próximo modelo;
+- se quiser, a ordem pode ser trocada sem mexer no código, pela variável `OPENROUTER_MODELS` no `.env`;
+- com `GOOGLE_API_KEY` (também gratuita, em <https://aistudio.google.com/apikey>), o Gemini entra como reserva final.
+
+O limite é da conta de quem testa: 50 requisições gratuitas por dia no OpenRouter, renovadas às 21h (horário de Brasília). Cada pergunta usa de 2 a 7, então dá para cerca de 10 perguntas por dia; perguntas repetidas saem do cache sem gastar cota, e `uv run cinerocket quota` mostra o saldo.
+
 ## Funcionalidades
 
 - **Text-to-SQL com autocorreção**: o agente explora o schema, confirma valores reais, testa o SQL e corrige a partir do erro do banco antes de responder.
@@ -188,6 +217,7 @@ Todas as categorias do enunciado estão na barra lateral da UI e no conjunto de 
 - **Glossário de negócio no prompt**: regras que o schema não revela. Exemplos: receita = faturamento = bilheteria; `lucro_brl` vale 0 sem receita e é igual à receita sem orçamento; margem agregada por grupo, para não ser distorcida por receitas ínfimas; filmes futuros no catálogo; nomes de gênero em inglês.
 - **Exemplos ensinam critérios, não respostas**: cada exemplo guarda o padrão do SQL e as premissas, nunca o resultado, e nenhum repete as perguntas da avaliação (um teste garante isso), para a medição não virar cópia. Pergunta e premissas são indexadas juntas, o que recupera exemplos do mesmo conceito (margem, votos, elenco) e não só de frases parecidas. Perguntas fora do domínio ficam abaixo do corte de similaridade e seguem sem exemplos.
 - **Dados vêm do banco, não do modelo**: o `output_validator` rejeita SQL final não testado e o serviço reexecuta a consulta para montar a tabela e o gráfico.
+- **Cadeia de modelos que se autocorrige**: no startup, a lista configurada é cruzada com o catálogo público do OpenRouter, e modelos fora do catálogo ou sem tool calling são ignorados. Se o catálogo estiver inacessível, a lista configurada é usada como está.
 - **Fallback no cliente**, com `max_retries=0` e prazo total por chamada (`DeadlineModel`): um 429, um modelo removido do catálogo ou um modelo que demora a terminar a geração passam para o próximo da cadeia em vez de repetir a chamada ou travar a pergunta. O OpenRouter responde o status 200 na hora e entrega o corpo devagar, então só um timeout de leitura não basta.
 - **Ordem da cadeia por desempenho medido** (05/10/2026, com o prompt completo do agente): `nvidia/nemotron-3-super-120b-a12b:free` (5 s), `apodex/apodex-1.1-mini:free` (4 s) e `inclusionai/ling-3.0-flash-sante:free` (9 s) acertaram o tool calling. O `nvidia/nemotron-3.5-lightning:free` chegou a levar 2 minutos por geração e ficou como reserva. Por último vem o `openrouter/free`, roteador do próprio OpenRouter que escolhe um modelo gratuito disponível no momento: o catálogo `:free` muda com frequência (o `qwen/qwen3.8-27b:free`, primeiro da cadeia em 03/10, saiu do catálogo dois dias depois), e ele garante que sempre haja um gratuito para responder.
 - **Cache só no primeiro turno**: perguntas de acompanhamento dependem do histórico e sempre vão ao agente.

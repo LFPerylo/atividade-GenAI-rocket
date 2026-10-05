@@ -11,6 +11,7 @@ from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 from cinerocket.config import Settings
 from cinerocket.domain.errors import ConfigurationError
+from cinerocket.llm.catalog import select_available
 from cinerocket.llm.deadline import DeadlineModel
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
@@ -27,7 +28,7 @@ class ModelChain:
         return ",".join(self.names)
 
 
-def build_model_chain(settings: Settings) -> ModelChain:
+def build_model_chain(settings: Settings, catalog: frozenset[str] | None = None) -> ModelChain:
     models: list[Model] = []
     if settings.openrouter_api_key is not None:
         client = AsyncOpenAI(
@@ -37,7 +38,8 @@ def build_model_chain(settings: Settings) -> ModelChain:
             default_headers={"X-Title": APP_TITLE},
         )
         provider = OpenRouterProvider(openai_client=client)
-        models.extend(OpenRouterModel(name, provider=provider) for name in settings.openrouter_models)
+        available = select_available(settings.openrouter_models, catalog)
+        models.extend(OpenRouterModel(name, provider=provider) for name in available)
     if settings.google_api_key is not None:
         google = GoogleProvider(api_key=settings.google_api_key.get_secret_value())
         models.extend(GoogleModel(name, provider=google) for name in settings.gemini_models)

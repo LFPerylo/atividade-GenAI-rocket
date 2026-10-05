@@ -14,6 +14,7 @@ from cinerocket.database.executor import QueryExecutor
 from cinerocket.database.movies import MovieRepository
 from cinerocket.guardrails.input import QuestionGuard
 from cinerocket.guardrails.sql import SqlGuard
+from cinerocket.llm.catalog import fetch_tool_capable_models
 from cinerocket.llm.factory import ModelChain, build_model_chain
 from cinerocket.semantic.embedder import FastEmbedEmbedder
 from cinerocket.semantic.search import SemanticSearch
@@ -50,7 +51,7 @@ def build_container(settings: Settings, model_chain: ModelChain | None = None) -
     retriever = ExampleRetriever(
         load_examples(), embedder, settings.few_shot_limit, settings.few_shot_min_score
     )
-    chain = model_chain or build_model_chain(settings)
+    chain = model_chain or build_model_chain(settings, catalog_for(settings))
     agent = build_agent(
         chain.model,
         retries=settings.agent_retries,
@@ -110,3 +111,7 @@ def new_agent_deps(
         semantic_limit=semantic_limit,
         examples=retriever.retrieve(question),
     )
+
+
+def catalog_for(settings: Settings) -> frozenset[str] | None:
+    return fetch_tool_capable_models() if settings.openrouter_api_key is not None else None
