@@ -52,7 +52,7 @@ Dependências sempre de fora para dentro: `api`/`cli`/`ui` → `application` →
 
 - OpenRouter gratuito: 50 requisições por dia (zera às 21h de Brasília); cada pergunta usa de 2 a 5. Confira com `cinerocket quota` antes de rodar avaliações e use `--case` e `--delay`.
 - O hash do cache inclui schema, cadeia de modelos, `PROMPT_VERSION` e a versão dos exemplos: mudar o prompt ou `examples.yaml` invalida o cache sozinho.
-- O catálogo `:free` muda com frequência. Para trocar a ordem dos modelos, meça latência e tool calling primeiro; modelos que entregam o corpo devagar são cortados pelo `DeadlineModel` (`LLM_TIMEOUT_SECONDS`).
+- O catálogo `:free` muda com frequência. No startup, `llm/catalog.py` cruza `OPENROUTER_MODELS` com o catálogo público (sem custo de cota) e descarta modelos removidos ou sem tool calling; mantenha `openrouter/free` no fim da cadeia como rede de segurança. Para trocar a ordem dos modelos, meça latência e tool calling primeiro; modelos que entregam o corpo devagar são cortados pelo `DeadlineModel` (`LLM_TIMEOUT_SECONDS`).
 
 ## Armadilhas conhecidas
 
