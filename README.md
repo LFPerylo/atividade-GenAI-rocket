@@ -189,7 +189,7 @@ Todas as categorias do enunciado estão na barra lateral da UI e no conjunto de 
 - **Exemplos ensinam critérios, não respostas**: cada exemplo guarda o padrão do SQL e as premissas, nunca o resultado, e nenhum repete as perguntas da avaliação (um teste garante isso), para a medição não virar cópia. Pergunta e premissas são indexadas juntas, o que recupera exemplos do mesmo conceito (margem, votos, elenco) e não só de frases parecidas. Perguntas fora do domínio ficam abaixo do corte de similaridade e seguem sem exemplos.
 - **Dados vêm do banco, não do modelo**: o `output_validator` rejeita SQL final não testado e o serviço reexecuta a consulta para montar a tabela e o gráfico.
 - **Fallback no cliente**, com `max_retries=0` e prazo total por chamada (`DeadlineModel`): um 429, um modelo removido do catálogo ou um modelo que demora a terminar a geração passam para o próximo da cadeia em vez de repetir a chamada ou travar a pergunta. O OpenRouter responde o status 200 na hora e entrega o corpo devagar, então só um timeout de leitura não basta.
-- **Ordem da cadeia por desempenho medido**: `qwen/qwen3.8-27b:free` e `nvidia/nemotron-3-super-120b-a12b:free` responderam com tool calling em 1 a 2 s. O `nvidia/nemotron-3.5-lightning:free` chegou a levar 2 minutos por geração com o prompt completo e ficou como reserva.
+- **Ordem da cadeia por desempenho medido** (05/10/2026, com o prompt completo do agente): `nvidia/nemotron-3-super-120b-a12b:free` (5 s), `apodex/apodex-1.1-mini:free` (4 s) e `inclusionai/ling-3.0-flash-sante:free` (9 s) acertaram o tool calling. O `nvidia/nemotron-3.5-lightning:free` chegou a levar 2 minutos por geração e ficou como reserva. Por último vem o `openrouter/free`, roteador do próprio OpenRouter que escolhe um modelo gratuito disponível no momento: o catálogo `:free` muda com frequência (o `qwen/qwen3.8-27b:free`, primeiro da cadeia em 03/10, saiu do catálogo dois dias depois), e ele garante que sempre haja um gratuito para responder.
 - **Cache só no primeiro turno**: perguntas de acompanhamento dependem do histórico e sempre vão ao agente.
 - **Embeddings locais**: a busca semântica não consome cota de LLM nem exige outra API.
 
@@ -210,7 +210,7 @@ Resultados medidos: na primeira versão, sem few-shot, 7 das 8 perguntas avaliad
 | Variável | Padrão | Descrição |
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | — | Chave do OpenRouter |
-| `OPENROUTER_MODELS` | 5 modelos `:free` | Lista JSON, em ordem de preferência; o catálogo `:free` muda com frequência, confira em <https://openrouter.ai/models?q=:free> |
+| `OPENROUTER_MODELS` | 6 modelos gratuitos | Lista JSON, em ordem de preferência; o catálogo `:free` muda com frequência, confira em <https://openrouter.ai/models?q=:free> |
 | `GOOGLE_API_KEY` | — | Chave do Gemini (último fallback) |
 | `GEMINI_MODELS` | `gemini-flash-latest`, `gemini-flash-lite-latest` | Lista JSON de modelos Gemini, usados depois dos do OpenRouter |
 | `DATABASE_PATH` | `data/cinerocket.db` | Banco da camada Gold |

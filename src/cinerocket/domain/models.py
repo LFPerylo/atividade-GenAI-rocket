@@ -1,7 +1,8 @@
+import json
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 CellValue = str | int | float | None
 
@@ -64,6 +65,24 @@ class AgentAnswer(BaseModel):
         default=False,
         description="True quando a pergunta não pode ser respondida com o catálogo de filmes",
     )
+
+    @field_validator("assumptions", mode="before")
+    @classmethod
+    def _split_text_assumptions(cls, value: object) -> object:
+        if isinstance(value, str):
+            lines = (line.strip().lstrip("-*•").strip() for line in value.splitlines())
+            return [line for line in lines if line]
+        return value
+
+    @field_validator("chart", mode="before")
+    @classmethod
+    def _parse_text_chart(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+        try:
+            return json.loads(value) if value.strip() else None
+        except json.JSONDecodeError:
+            return None
 
 
 class MovieMatch(BaseModel):

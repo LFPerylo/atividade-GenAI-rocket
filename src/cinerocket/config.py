@@ -12,10 +12,11 @@ class Settings(BaseSettings):
     openrouter_api_key: SecretStr | None = None
     openrouter_models: list[str] = Field(
         default_factory=lambda: [
-            "qwen/qwen3.8-27b:free",
             "nvidia/nemotron-3-super-120b-a12b:free",
+            "apodex/apodex-1.1-mini:free",
+            "inclusionai/ling-3.0-flash-sante:free",
             "nvidia/nemotron-3.5-lightning:free",
-            "google/gemma-4-26b-a4b-it:free",
+            "google/gemma-4-31b-it:free",
             "openrouter/free",
         ]
     )

@@ -50,3 +50,16 @@ def test_accepts_tested_answer_and_normalizes_escaped_newlines(deps: AgentDeps) 
     validated = validate_answer(deps, AgentAnswer(answer="Linha 1\\nLinha 2", sql=SQL))
 
     assert validated.answer == "Linha 1\nLinha 2"
+
+
+def test_accepts_free_model_quirks_for_lists_and_nested_objects() -> None:
+    answer = AgentAnswer.model_validate(
+        {
+            "answer": "Resposta",
+            "assumptions": "- Receita informada\n- Apenas lançados",
+            "chart": '{"kind": "bar", "x": "genero", "y": "lucro", "title": "Lucro"}',
+        }
+    )
+
+    assert answer.assumptions == ["Receita informada", "Apenas lançados"]
+    assert answer.chart is not None and answer.chart.x == "genero"
